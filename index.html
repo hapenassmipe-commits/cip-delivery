@@ -114,8 +114,7 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tela-' + id).classList.add('active');
             document.getElementById('btn-' + id).classList.add('active');
-            if(id === 'mapa') { setTimeout(() => { map.invalidateSize(); }, 300); }
-        }
+            if(id === 'mapa') { setTimeout(() => { map.invalidateSize(); }, 300); }}
 
         function abrirPlanos() { document.getElementById('secao-planos').style.display = 'block'; }
         function fecharPlanos() { document.getElementById('secao-planos').style.display = 'none'; }
