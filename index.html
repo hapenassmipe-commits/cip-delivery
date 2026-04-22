@@ -5,118 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cipó Delivery</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-top">
-            <img src="logo.png" alt="Cipó Delivery" class="logo-img" onerror="this.src='https://via.placeholder.com/150x40?text=Cipó+Delivery'">
-            <div class="header-right">
-                <button onclick="mudarTela('vendedor')" class="btn-vendedor">Seja Parceiro</button>
-            </div>
+    <header class="app-header">
+        <div class="header-content">
+            <span class="location"><i class="fas fa-map-marker-alt"></i> Cipó, Centro</span>
+            <img src="logo.png" class="logo-top" onerror="this.style.display='none'">
         </div>
-        <div class="tabs-nav">
-            <button onclick="mudarTela('inicio')" id="tab-inicio" class="tab-btn active">Início</button>
-            <button onclick="mudarTela('mapa')" id="tab-mapa" class="tab-btn">Mapa da Fome</button>
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Busque por pratos ou restaurantes">
+        </div>
+        <div class="filter-scroll">
+            <div class="filter-item active">Todos</div>
+            <div class="filter-item">Pizzas</div>
+            <div class="filter-item">Burguers</div>
+            <div class="filter-item">Açaí</div>
+            <div class="filter-item">Marmitas</div>
         </div>
     </header>
 
     <main id="tela-inicio" class="tela active">
-        <section class="banner-promo">
-            <div class="card-destaque">
-                <span class="badge-ouro">OURO</span>
-                <h3>Pizzaria Central</h3>
-                <p>O melhor de Cipó-BA com 10% OFF</p>
+        <section class="destaques">
+            <h2 class="section-title">Destaques em Cipó</h2>
+            <div class="loja-card-premium">
+                <div class="badge-ouro">DESTAQUE</div>
+                <div class="loja-header">
+                    <div class="img-placeholder"></div>
+                    <div class="loja-detalhes">
+                        <h3>Pizzaria Avenida</h3>
+                        <p><i class="fas fa-star gold"></i> 4.9 • Pizza • 15-25 min</p>
+                        <p class="entrega-info">Entrega: <span class="gratis">Grátis</span></p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="lista-lojas">
-            <h2 class="title-sec">Lojas Abertas</h2>
-            <div class="loja-card ouro">
-                <img src="https://via.placeholder.com/50" class="img-loja">
-                <div class="info-loja">
-                    <h4>Pizzaria Avenida <i class="fas fa-check-circle"></i></h4>
-                    <p>Pizza • 0.8km • <span class="green">Grátis</span></p>
-                </div>
-                <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="loja-card">
-                <img src="https://via.placeholder.com/50" class="img-loja">
-                <div class="info-loja">
+        <section class="lista-geral">
+            <h2 class="section-title">Todos os Restaurantes</h2>
+            <div class="loja-item-lista">
+                <div class="mini-img"></div>
+                <div class="item-info">
                     <h4>Dogão do Bairro</h4>
-                    <p>Lanches • 1.5km • R$ 3,00</p>
+                    <p>Lanches • 1.2 km</p>
+                    <p class="taxa">Taxa de entrega: R$ 3,50</p>
                 </div>
-                <a href="https://wa.me/557599999999" class="btn-wpp"><i class="fab fa-whatsapp"></i></a>
+                <button class="btn-pedir"><i class="fab fa-whatsapp"></i></button>
             </div>
         </section>
     </main>
 
     <section id="tela-mapa" class="tela">
+        <div class="map-overlay">Encontre lojas perto de você</div>
         <div id="map"></div>
     </section>
 
-    <section id="tela-vendedor" class="tela">
-        <div class="vendedor-container">
-            <h2>Planos para Parceiros</h2>
-            <div class="planos-grid">
-                <div class="plano-box">
-                    <h3>Prata</h3>
-                    <p class="preco">R$ 29,90<span>/mês</span></p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> Cardápio no App</li>
-                        <li><i class="fas fa-check"></i> 1 mês Grátis</li>
-                    </ul>
-                    <a href="SEU_LINK_MERCADO_PAGO_PRATA" class="btn-assinar">Assinar Prata</a>
+    <section id="tela-painel" class="tela">
+        <div class="perfil-usuario">
+            <div class="avatar"><i class="fas fa-user-circle"></i></div>
+            <h3>Olá, Visitante</h3>
+            <p>Acesse sua conta ou cadastre seu comércio</p>
+        </div>
+        
+        <div class="menu-painel">
+            <div class="menu-row"><i class="fas fa-heart"></i> Meus Favoritos</div>
+            <div class="menu-row"><i class="fas fa-history"></i> Pedidos Recentes</div>
+            <hr>
+            <div class="menu-row highlight" onclick="abrirPlanos()">
+                <i class="fas fa-store"></i> 
+                <span>Quero vender no Cipó Delivery</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </div>
+        </div>
+
+        <div id="secao-planos" class="planos-hidden">
+            <button onclick="fecharPlanos()" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <div class="planos-content">
+                <h2>Planos de Parceria</h2>
+                <div class="p-card">
+                    <h3>Plano Prata</h3>
+                    <p class="p-price">R$ 29,90/mês</p>
+                    <button class="btn-mp">Assinar via Mercado Pago</button>
                 </div>
-                <div class="plano-box ouro">
-                    <div class="tag">MAIS VENDIDO</div>
-                    <h3>Ouro</h3>
-                    <p class="preco">R$ 69,90<span>/mês</span></p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> <strong>Topo da Lista</strong></li>
-                        <li><i class="fas fa-check"></i> Anúncios no Insta</li>
-                        <li><i class="fas fa-check"></i> 1 mês Grátis</li>
-                    </ul>
-                    <a href="SEU_LINK_MERCADO_PAGO_OURO" class="btn-assinar gold">Assinar Ouro</a>
+                <div class="p-card premium">
+                    <div class="tag">TOP 1</div>
+                    <h3>Plano Ouro</h3>
+                    <p class="p-price">R$ 69,90/mês</p>
+                    <button class="btn-mp">Assinar via Mercado Pago</button>
                 </div>
             </div>
-
-            <form class="form-cadastro">
-                <h3>Cadastro da Loja</h3>
-                <input type="text" placeholder="Nome do Estabelecimento" required>
-                <input type="text" placeholder="CPF ou CNPJ (1 mês grátis por Doc)" required>
-                <input type="tel" placeholder="WhatsApp (DDD + Número)" required>
-                <button type="submit" class="btn-enviar">Criar Conta e Iniciar Teste</button>
-            </form>
         </div>
     </section>
 
-    <nav class="bottom-nav">
-        <div onclick="mudarTela('inicio')" class="nav-item"><i class="fas fa-home"></i><span>Início</span></div>
-        <div onclick="mudarTela('mapa')" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Mapa</span></div>
-        <div onclick="mudarTela('vendedor')" class="nav-item"><i class="fas fa-store"></i><span>Painel</span></div>
+    <nav class="main-nav">
+        <div onclick="mudarTela('inicio')" class="nav-btn active" id="btn-inicio"><i class="fas fa-home"></i><span>Início</span></div>
+        <div onclick="mudarTela('mapa')" class="nav-btn" id="btn-mapa"><i class="fas fa-map-marker-alt"></i><span>Mapa</span></div>
+        <div onclick="mudarTela('painel')" class="nav-btn" id="btn-painel"><i class="fas fa-user"></i><span>Perfil</span></div>
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         function mudarTela(id) {
             document.querySelectorAll('.tela').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tela-' + id).classList.add('active');
-            if(id === 'inicio' || id === 'mapa') {
-                document.getElementById('tab-' + id).classList.add('active');
-            }
-            if(id === 'mapa') { setTimeout(() => { map.invalidateSize(); }, 200); }
-            window.scrollTo(0,0);
+            document.getElementById('btn-' + id).classList.add('active');
+            if(id === 'mapa') { setTimeout(() => { map.invalidateSize(); }, 300); }
         }
 
-        var map = L.map('map').setView([-11.089, -38.511], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}.png').addTo(map);
-        L.marker([-11.089, -38.511]).addTo(map).bindPopup("<b>Cipó Delivery</b><br>As melhores lojas aqui!");
+        function abrirPlanos() { document.getElementById('secao-planos').style.display = 'block'; }
+        function fecharPlanos() { document.getElementById('secao-planos').style.display = 'none'; }
+
+        var map = L.map('map').setView([-11.089, -38.511], 16);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map); // Mapa Clean
     </script>
 </body>
 </html>
