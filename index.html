@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipó Delivery</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-top">
+            <img src="logo.png" alt="Cipó Delivery" class="logo-img" onerror="this.src='https://via.placeholder.com/150x40?text=Cipó+Delivery'">
+            <div class="header-right">
+                <button onclick="mudarTela('vendedor')" class="btn-vendedor">Seja Parceiro</button>
+            </div>
+        </div>
+        <div class="tabs-nav">
+            <button onclick="mudarTela('inicio')" id="tab-inicio" class="tab-btn active">Início</button>
+            <button onclick="mudarTela('mapa')" id="tab-mapa" class="tab-btn">Mapa da Fome</button>
+        </div>
+    </header>
+
+    <main id="tela-inicio" class="tela active">
+        <section class="banner-promo">
+            <div class="card-destaque">
+                <span class="badge-ouro">OURO</span>
+                <h3>Pizzaria Central</h3>
+                <p>O melhor de Cipó-BA com 10% OFF</p>
+            </div>
+        </section>
+
+        <section class="lista-lojas">
+            <h2 class="title-sec">Lojas Abertas</h2>
+            <div class="loja-card ouro">
+                <img src="https://via.placeholder.com/50" class="img-loja">
+                <div class="info-loja">
+                    <h4>Pizzaria Avenida <i class="fas fa-check-circle"></i></h4>
+                    <p>Pizza • 0.8km • <span class="green">Grátis</span></p>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="loja-card">
+                <img src="https://via.placeholder.com/50" class="img-loja">
+                <div class="info-loja">
+                    <h4>Dogão do Bairro</h4>
+                    <p>Lanches • 1.5km • R$ 3,00</p>
+                </div>
+                <a href="https://wa.me/557599999999" class="btn-wpp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </section>
+    </main>
+
+    <section id="tela-mapa" class="tela">
+        <div id="map"></div>
+    </section>
+
+    <section id="tela-vendedor" class="tela">
+        <div class="vendedor-container">
+            <h2>Planos para Parceiros</h2>
+            <div class="planos-grid">
+                <div class="plano-box">
+                    <h3>Prata</h3>
+                    <p class="preco">R$ 29,90<span>/mês</span></p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Cardápio no App</li>
+                        <li><i class="fas fa-check"></i> 1 mês Grátis</li>
+                    </ul>
+                    <a href="SEU_LINK_MERCADO_PAGO_PRATA" class="btn-assinar">Assinar Prata</a>
+                </div>
+                <div class="plano-box ouro">
+                    <div class="tag">MAIS VENDIDO</div>
+                    <h3>Ouro</h3>
+                    <p class="preco">R$ 69,90<span>/mês</span></p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> <strong>Topo da Lista</strong></li>
+                        <li><i class="fas fa-check"></i> Anúncios no Insta</li>
+                        <li><i class="fas fa-check"></i> 1 mês Grátis</li>
+                    </ul>
+                    <a href="SEU_LINK_MERCADO_PAGO_OURO" class="btn-assinar gold">Assinar Ouro</a>
+                </div>
+            </div>
+
+            <form class="form-cadastro">
+                <h3>Cadastro da Loja</h3>
+                <input type="text" placeholder="Nome do Estabelecimento" required>
+                <input type="text" placeholder="CPF ou CNPJ (1 mês grátis por Doc)" required>
+                <input type="tel" placeholder="WhatsApp (DDD + Número)" required>
+                <button type="submit" class="btn-enviar">Criar Conta e Iniciar Teste</button>
+            </form>
+        </div>
+    </section>
+
+    <nav class="bottom-nav">
+        <div onclick="mudarTela('inicio')" class="nav-item"><i class="fas fa-home"></i><span>Início</span></div>
+        <div onclick="mudarTela('mapa')" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Mapa</span></div>
+        <div onclick="mudarTela('vendedor')" class="nav-item"><i class="fas fa-store"></i><span>Painel</span></div>
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        function mudarTela(id) {
+            document.querySelectorAll('.tela').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tela-' + id).classList.add('active');
+            if(id === 'inicio' || id === 'mapa') {
+                document.getElementById('tab-' + id).classList.add('active');
+            }
+            if(id === 'mapa') { setTimeout(() => { map.invalidateSize(); }, 200); }
+            window.scrollTo(0,0);
+        }
+
+        var map = L.map('map').setView([-11.089, -38.511], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}.png').addTo(map);
+        L.marker([-11.089, -38.511]).addTo(map).bindPopup("<b>Cipó Delivery</b><br>As melhores lojas aqui!");
+    </script>
+</body>
+</html>

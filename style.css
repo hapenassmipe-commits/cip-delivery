@@ -1,0 +1,49 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+body { background: #fff; padding-bottom: 70px; color: #3e3e3e; }
+
+/* Header */
+.main-header { position: sticky; top: 0; background: #fff; z-index: 1000; border-bottom: 1px solid #eee; }
+.header-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; }
+.logo-img { height: 35px; }
+.btn-vendedor { background: #f2f2f2; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; }
+.tabs-nav { display: flex; justify-content: center; gap: 20px; padding-bottom: 10px; }
+.tab-btn { background: none; border: none; font-weight: bold; color: #717171; border-bottom: 2px solid transparent; padding-bottom: 4px; }
+.tab-btn.active { color: #ea1d2c; border-bottom: 2px solid #ea1d2c; }
+
+/* Telas */
+.tela { display: none; padding: 15px; animation: fadeIn 0.3s; }
+.tela.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Cards de Lojas */
+.title-sec { font-size: 16px; margin-bottom: 15px; }
+.loja-card { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid #f2f2f2; }
+.loja-card.ouro { background: #fffdf0; border-left: 4px solid #FFD700; }
+.img-loja { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+.info-loja h4 { font-size: 14px; }
+.info-loja h4 i { color: #ea1d2c; font-size: 10px; }
+.green { color: #2e7d32; font-weight: bold; }
+.btn-wpp { color: #25d366; font-size: 20px; text-decoration: none; margin-left: auto; }
+
+/* Mapa */
+#map { height: calc(100vh - 160px); width: 100%; border-radius: 12px; z-index: 1; }
+
+/* Planos */
+.planos-grid { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0; }
+.plano-box { min-width: 260px; padding: 20px; border: 1px solid #eee; border-radius: 12px; text-align: center; background: #fff; position: relative; }
+.plano-box.ouro { border: 2px solid #FFD700; background: #fffdf0; }
+.tag { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #FFD700; font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 10px; }
+.preco { font-size: 24px; font-weight: bold; margin: 10px 0; }
+.preco span { font-size: 12px; color: #777; }
+.btn-assinar { display: block; background: #ea1d2c; color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 15px; }
+.btn-assinar.gold { background: #333; }
+
+/* Form */
+.form-cadastro { margin-top: 30px; background: #f9f9f9; padding: 20px; border-radius: 12px; }
+.form-cadastro input { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #ddd; }
+.btn-enviar { width: 100%; background: #2e7d32; color: #fff; border: none; padding: 15px; border-radius: 6px; font-weight: bold; margin-top: 15px; }
+
+/* Bottom Nav */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #eee; z-index: 1001; }
+.nav-item { text-align: center; color: #717171; font-size: 10px; cursor: pointer; }
+.nav-item i { display: block; font-size: 18px; margin-bottom: 3px; }
