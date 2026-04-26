@@ -1,446 +1,860 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#EA1D2C" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Cipó Delivery</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-</head>
-<body>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#DC2626"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Cipó Delivery — Sua cidade, na palma da mão</title>
 
-<!-- SPLASH -->
-<div id="splash" class="splash">
-  <div class="splash-logo">
-    <div class="splash-icon"><i class="fa-solid fa-motorcycle"></i></div>
-    <h1>Cipó <span>Delivery</span></h1>
-    <p>Cipó, Bahia</p>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand:  { DEFAULT:'#DC2626', dark:'#B91C1C', light:'#FEE2E2', muted:'#FCA5A5' },
+        surface:'#FAFAFA',
+        card:   '#FFFFFF',
+      },
+      fontFamily: {
+        sans: ['Sora','ui-sans-serif','system-ui'],
+        mono: ['JetBrains Mono','monospace'],
+      },
+      keyframes: {
+        slideUp:   { from:{transform:'translateY(100%)',opacity:0}, to:{transform:'translateY(0)',opacity:1} },
+        fadeIn:    { from:{opacity:0}, to:{opacity:1} },
+        fadeInUp:  { from:{transform:'translateY(20px)',opacity:0}, to:{transform:'translateY(0)',opacity:1} },
+        ping2:     { '0%,100%':{transform:'scale(1)'}, '50%':{transform:'scale(1.08)'} },
+        float:     { '0%,100%':{transform:'translateY(0)'}, '50%':{transform:'translateY(-8px)'} },
+        shimmer:   { from:{backgroundPosition:'-200% 0'}, to:{backgroundPosition:'200% 0'} },
+      },
+      animation: {
+        slideUp:  'slideUp .35s cubic-bezier(.16,1,.3,1) both',
+        fadeIn:   'fadeIn .25s ease both',
+        fadeInUp: 'fadeInUp .3s ease both',
+        ping2:    'ping2 1.8s ease-in-out infinite',
+        float:    'float 3s ease-in-out infinite',
+        shimmer:  'shimmer 1.6s linear infinite',
+      }
+    }
+  }
+}
+</script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, orderBy, where, getDocs, getDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ─── CONFIGURE SEU FIREBASE AQUI ─────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "SUA_API_KEY",
+  authDomain:        "SEU_PROJETO.firebaseapp.com",
+  projectId:         "SEU_PROJETO",
+  storageBucket:     "SEU_PROJETO.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId:             "SEU_APP_ID"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const gProvider = new GoogleAuthProvider();
+
+// Expose to window for inline handlers
+window._fb = { auth, db, gProvider, onAuthStateChanged, signInWithPopup,
+  signOut, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, orderBy, where, getDocs, getDoc };
+</script>
+
+<style>
+  * { -webkit-tap-highlight-color: transparent; }
+  body { overflow:hidden; }
+  .scroll-y { overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .scroll-y::-webkit-scrollbar { display:none; }
+  .scroll-x { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .scroll-x::-webkit-scrollbar { display:none; }
+
+  /* Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+    border-radius: 8px;
+  }
+
+  /* Toggle Switch */
+  .toggle-track { transition: background .25s; }
+  .toggle-thumb { transition: transform .25s; }
+  input:checked + .toggle-track { background:#DC2626; }
+  input:checked ~ .toggle-thumb,
+  input:checked + .toggle-track + .toggle-thumb { transform: translateX(24px); }
+
+  /* Category pill active */
+  .cat-pill.active { background:#DC2626; color:#fff; border-color:#DC2626; }
+
+  /* Map marker */
+  .lmap-pin { width:40px;height:40px;border-radius:50%;border:3px solid #fff;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,.25); }
+  .lmap-pin.premium { background:#F59E0B; }
+  .lmap-pin.std     { background:#DC2626; }
+
+  /* Toast */
+  #toast { pointer-events:none; }
+
+  /* Bottom nav active */
+  .bnav-btn.active .bnav-icon { color:#DC2626; }
+  .bnav-btn.active .bnav-label { color:#DC2626; font-weight:700; }
+  .bnav-btn.active .bnav-dot { display:block; }
+
+  /* Status badge */
+  .status-aguardando { background:#FEF3C7; color:#92400E; }
+  .status-preparando  { background:#DBEAFE; color:#1E40AF; }
+  .status-saiu        { background:#D1FAE5; color:#065F46; }
+  .status-entregue    { background:#F3F4F6; color:#374151; }
+</style>
+</head>
+<body class="bg-surface font-sans text-gray-900 select-none">
+
+<!-- ══════════════ SPLASH ══════════════ -->
+<div id="splash" class="fixed inset-0 z-[9999] bg-brand flex flex-col items-center justify-center gap-6">
+  <div class="animate-ping2">
+    <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-5xl">🛵</div>
   </div>
-  <div class="splash-dots">
-    <span></span><span></span><span></span>
+  <div class="text-center">
+    <h1 class="text-4xl font-black text-white tracking-tight">Cipó <span class="font-light opacity-80">Delivery</span></h1>
+    <p class="text-white/60 text-xs font-medium tracking-widest uppercase mt-1">Cipó · Bahia</p>
+  </div>
+  <div class="flex gap-2 mt-8">
+    <span class="w-2 h-2 rounded-full bg-white/40 animate-[dotBlink_1.2s_ease_0s_infinite]"></span>
+    <span class="w-2 h-2 rounded-full bg-white/40 animate-[dotBlink_1.2s_ease_.2s_infinite]"></span>
+    <span class="w-2 h-2 rounded-full bg-white/40 animate-[dotBlink_1.2s_ease_.4s_infinite]"></span>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app" class="app hidden">
+<!-- ══════════════ APP SHELL ══════════════ -->
+<div id="app" class="hidden fixed inset-0 flex flex-col max-w-[480px] mx-auto bg-surface">
 
-  <!-- TELA: INÍCIO -->
-  <section id="screen-home" class="screen active">
-    <header class="home-header">
-      <div class="header-top">
-        <div class="header-location">
-          <i class="fa-solid fa-location-dot"></i>
+  <!-- ══ SCREEN: HOME ══ -->
+  <section id="screen-home" class="screen flex flex-col flex-1 overflow-hidden">
+    <!-- Header -->
+    <header class="bg-white flex-shrink-0 px-4 pt-12 pb-0 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center">
+            <i class="fa-solid fa-location-dot text-brand text-sm"></i>
+          </div>
           <div>
-            <span class="loc-label">Entregando em</span>
-            <strong>Cipó, BA</strong>
+            <span class="block text-[10px] text-gray-400 font-medium uppercase tracking-wider">Entregando em</span>
+            <strong class="text-sm font-bold">Cipó, BA</strong>
           </div>
         </div>
-        <button class="btn-cart">
-          <i class="fa-solid fa-bag-shopping"></i>
-          <span class="cart-badge">2</span>
+        <div class="flex items-center gap-2">
+          <!-- Map icon -->
+          <button onclick="navigate('map')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-brand-light hover:text-brand transition-colors">
+            <i class="fa-solid fa-map-location-dot text-sm"></i>
+          </button>
+          <!-- Cart -->
+          <button onclick="openCart()" class="relative w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand">
+            <i class="fa-solid fa-bag-shopping text-sm"></i>
+            <span id="cart-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="flex items-center gap-3 bg-gray-100 rounded-2xl px-4 py-2.5 mb-3 focus-within:ring-2 focus-within:ring-brand/30 transition-all">
+        <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+        <input id="search-input" type="text" placeholder="Buscar restaurantes ou pratos..."
+          class="flex-1 bg-transparent text-sm font-medium placeholder-gray-400 focus:outline-none"
+          oninput="handleSearch(this.value)"/>
+        <button id="search-clear" onclick="clearSearch()" class="hidden text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
-      <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Buscar restaurantes ou pratos..." />
-      </div>
-      <div class="banner-carousel">
-        <div class="banner">
-          <div class="banner-text">
-            <span class="banner-tag">🔥 Oferta do dia</span>
-            <h3>Frete grátis<br/>nos primeiros pedidos!</h3>
-            <span class="banner-cta">Pedir agora</span>
-          </div>
-          <div class="banner-img"><i class="fa-solid fa-pizza-slice"></i></div>
-        </div>
+
+      <!-- Moment Categories -->
+      <div class="scroll-x flex gap-2 pb-3">
+        <button class="cat-pill active flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-brand text-sm font-semibold transition-all" onclick="filterMoment(this,'todos')">
+          🍽️ <span>Todos</span>
+        </button>
+        <button class="cat-pill flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition-all" onclick="filterMoment(this,'almoco')">
+          ☀️ <span>Almoço</span>
+        </button>
+        <button class="cat-pill flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition-all" onclick="filterMoment(this,'jantar')">
+          🌆 <span>Jantar</span>
+        </button>
+        <button class="cat-pill flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition-all" onclick="filterMoment(this,'lanches')">
+          🍔 <span>Lanches</span>
+        </button>
+        <button class="cat-pill flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition-all" onclick="filterMoment(this,'bebidas')">
+          🥤 <span>Bebidas</span>
+        </button>
+        <button class="cat-pill flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition-all" onclick="filterMoment(this,'madruga')">
+          🌙 <span>Madruga</span>
+        </button>
       </div>
     </header>
 
-    <div class="scroll-content">
-      <div class="section-header">
-        <h2>Categorias</h2>
-      </div>
-      <div class="categories-scroll">
-        <button class="cat-btn active" onclick="filterCategory(this,'todos')">
-          <span class="cat-icon">🍽️</span><span>Todos</span>
-        </button>
-        <button class="cat-btn" onclick="filterCategory(this,'pizza')">
-          <span class="cat-icon">🍕</span><span>Pizzas</span>
-        </button>
-        <button class="cat-btn" onclick="filterCategory(this,'lanche')">
-          <span class="cat-icon">🍔</span><span>Lanches</span>
-        </button>
-        <button class="cat-btn" onclick="filterCategory(this,'acai')">
-          <span class="cat-icon">🫐</span><span>Açaí</span>
-        </button>
-        <button class="cat-btn" onclick="filterCategory(this,'churrasco')">
-          <span class="cat-icon">🥩</span><span>Churrasco</span>
-        </button>
-        <button class="cat-btn" onclick="filterCategory(this,'bebida')">
-          <span class="cat-icon">🥤</span><span>Bebidas</span>
-        </button>
+    <!-- Scroll body -->
+    <div class="scroll-y flex-1 pb-20">
+
+      <!-- Banner -->
+      <div class="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-brand to-brand-dark p-5 flex items-center justify-between overflow-hidden relative">
+        <div class="absolute top-0 right-16 w-32 h-32 rounded-full bg-white/5"></div>
+        <div>
+          <span class="inline-block bg-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">🔥 Oferta do dia</span>
+          <h3 class="text-white font-extrabold text-lg leading-tight">Frete grátis<br/>no 1º pedido!</h3>
+          <span class="inline-block mt-2 bg-white text-brand text-xs font-bold px-3 py-1 rounded-full">Pedir agora</span>
+        </div>
+        <div class="text-5xl animate-float">🛵</div>
       </div>
 
-      <div class="section-header">
-        <h2>Destaques</h2>
-        <a href="#" class="see-all">Ver todos</a>
+      <!-- Lojas Section -->
+      <div class="px-4 mt-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-extrabold">Restaurantes</h2>
+          <span id="store-count" class="text-xs text-gray-400 font-medium"></span>
+        </div>
+
+        <!-- Skeleton loaders -->
+        <div id="stores-skeleton" class="flex flex-col gap-3">
+          <div class="h-36 skeleton w-full"></div>
+          <div class="h-36 skeleton w-full"></div>
+          <div class="h-36 skeleton w-full"></div>
+        </div>
+
+        <!-- Store list -->
+        <div id="stores-list" class="flex flex-col gap-3 hidden"></div>
+
+        <!-- Empty state -->
+        <div id="stores-empty" class="hidden py-16 text-center">
+          <div class="text-5xl mb-3">🔍</div>
+          <p class="font-bold text-gray-600">Nenhuma loja encontrada</p>
+          <p class="text-sm text-gray-400 mt-1">Tente outra categoria ou busca</p>
+        </div>
       </div>
-
-      <div id="restaurant-list" class="restaurant-list">
-
-        <div class="restaurant-card" data-category="pizza">
-          <div class="card-img pizza-bg">
-            <span class="card-badge">Popular</span>
-            <div class="card-emoji">🍕</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Pizzaria do Zé</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.8</span>
-            </div>
-            <p class="card-subtitle">Pizza • Italiana</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 30–45 min</span>
-              <span class="delivery-fee free">Taxa: Grátis</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="restaurant-card" data-category="lanche">
-          <div class="card-img lanche-bg">
-            <span class="card-badge novo">Novo</span>
-            <div class="card-emoji">🍔</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Burguer Cipó</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.6</span>
-            </div>
-            <p class="card-subtitle">Lanches • Hambúrguer</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 20–35 min</span>
-              <span class="delivery-fee">Taxa: R$ 3,50</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="restaurant-card" data-category="acai">
-          <div class="card-img acai-bg">
-            <div class="card-emoji">🫐</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Açaí da Serra</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.9</span>
-            </div>
-            <p class="card-subtitle">Açaí • Sorvetes</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 15–25 min</span>
-              <span class="delivery-fee free">Taxa: Grátis</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="restaurant-card" data-category="churrasco">
-          <div class="card-img churrasco-bg">
-            <div class="card-emoji">🥩</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Brasa &amp; Brasa</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.7</span>
-            </div>
-            <p class="card-subtitle">Churrasco • Marmita</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 40–55 min</span>
-              <span class="delivery-fee">Taxa: R$ 5,00</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="restaurant-card" data-category="bebida">
-          <div class="card-img bebida-bg">
-            <div class="card-emoji">🥤</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Depósito do Frio</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.5</span>
-            </div>
-            <p class="card-subtitle">Bebidas • Conveniência</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 10–20 min</span>
-              <span class="delivery-fee">Taxa: R$ 2,00</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="restaurant-card" data-category="lanche">
-          <div class="card-img lanche2-bg">
-            <span class="card-badge promo">Promoção</span>
-            <div class="card-emoji">🌮</div>
-          </div>
-          <div class="card-body">
-            <div class="card-title-row">
-              <h3>Tapioca da Mana</h3>
-              <span class="card-rating"><i class="fa-solid fa-star"></i> 4.4</span>
-            </div>
-            <p class="card-subtitle">Tapioca • Salgados</p>
-            <div class="card-meta">
-              <span><i class="fa-regular fa-clock"></i> 20–30 min</span>
-              <span class="delivery-fee">Taxa: R$ 3,00</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div style="height:20px"></div>
     </div>
   </section>
 
-  <!-- TELA: MAPA -->
-  <section id="screen-map" class="screen">
-    <div class="map-header">
-      <h2><i class="fa-solid fa-map-location-dot"></i> Mapa de Lojas</h2>
-      <p>Cipó, Bahia — Área de cobertura</p>
+  <!-- ══ SCREEN: STORE DETAIL ══ -->
+  <section id="screen-store" class="screen hidden flex-col flex-1 overflow-hidden">
+    <div class="flex-shrink-0 bg-white shadow-sm">
+      <div id="store-hero" class="h-44 relative flex items-end">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60"></div>
+        <button onclick="navigate('home')" class="absolute top-12 left-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <div class="relative z-10 p-4 w-full">
+          <div id="store-name-hero" class="text-2xl font-black text-white"></div>
+          <div id="store-meta-hero" class="flex gap-3 mt-1 text-white/80 text-xs font-medium"></div>
+        </div>
+      </div>
+      <!-- Store info bar -->
+      <div id="store-info-bar" class="flex gap-4 px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-100"></div>
     </div>
-    <div id="map"></div>
-    <div class="map-legend">
-      <div class="legend-item"><span class="legend-dot premium"></span> Parceiro Premium</div>
-      <div class="legend-item"><span class="legend-dot standard"></span> Parceiro Padrão</div>
+
+    <div class="scroll-y flex-1 pb-24 px-4 pt-4">
+      <div id="store-status-banner" class="hidden mb-3 py-2 px-4 rounded-xl text-center text-sm font-bold bg-red-50 text-red-600">
+        ⛔ Esta loja está fechada no momento
+      </div>
+
+      <!-- Products skeleton -->
+      <div id="products-skeleton" class="flex flex-col gap-3">
+        <div class="h-24 skeleton w-full"></div>
+        <div class="h-24 skeleton w-full"></div>
+        <div class="h-24 skeleton w-full"></div>
+      </div>
+      <div id="products-list" class="flex flex-col gap-3 hidden"></div>
+      <div id="products-empty" class="hidden py-16 text-center">
+        <div class="text-5xl mb-3">🍽️</div>
+        <p class="font-bold text-gray-600">Nenhum produto disponível</p>
+      </div>
     </div>
   </section>
 
-  <!-- TELA: PERFIL -->
-  <section id="screen-profile" class="screen">
-    <div class="profile-header">
-      <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
-      <div class="profile-info">
-        <h3>Olá, visitante!</h3>
-        <span class="profile-tag">Cliente</span>
+  <!-- ══ SCREEN: MAP ══ -->
+  <section id="screen-map" class="screen hidden flex flex-col flex-1 overflow-hidden">
+    <div class="flex-shrink-0 bg-white px-4 pt-12 pb-3 shadow-sm flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-extrabold flex items-center gap-2">
+          <i class="fa-solid fa-map-location-dot text-brand"></i> Mapa de Lojas
+        </h2>
+        <p class="text-xs text-gray-400 font-medium">Cipó, Bahia — área de cobertura</p>
       </div>
-      <button class="btn-edit-profile"><i class="fa-solid fa-pen"></i></button>
+      <div class="flex gap-2 text-xs font-semibold">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>Premium</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-brand inline-block"></span>Padrão</span>
+      </div>
+    </div>
+    <div id="map" class="flex-1" style="min-height:0"></div>
+  </section>
+
+  <!-- ══ SCREEN: ORDERS (client) ══ -->
+  <section id="screen-orders" class="screen hidden flex flex-col flex-1 overflow-hidden">
+    <div class="flex-shrink-0 bg-white px-4 pt-12 pb-4 shadow-sm">
+      <h2 class="text-xl font-extrabold">Meus Pedidos</h2>
+    </div>
+    <div class="scroll-y flex-1 px-4 pt-4 pb-20">
+      <div id="orders-skeleton" class="flex flex-col gap-3">
+        <div class="h-24 skeleton w-full"></div>
+        <div class="h-24 skeleton w-full"></div>
+      </div>
+      <div id="orders-list" class="hidden flex flex-col gap-3"></div>
+      <div id="orders-empty" class="hidden py-16 text-center">
+        <div class="text-5xl mb-3">📦</div>
+        <p class="font-bold text-gray-600">Nenhum pedido ainda</p>
+        <p class="text-sm text-gray-400 mt-1">Seus pedidos aparecerão aqui</p>
+      </div>
+      <div id="orders-login-prompt" class="hidden py-16 text-center">
+        <div class="text-5xl mb-3">🔐</div>
+        <p class="font-bold text-gray-600">Faça login para ver seus pedidos</p>
+        <button onclick="doLogin()" class="mt-4 px-6 py-2.5 bg-brand text-white rounded-full font-bold text-sm">Entrar com Google</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SCREEN: PROFILE ══ -->
+  <section id="screen-profile" class="screen hidden flex flex-col flex-1 overflow-hidden">
+    <!-- Header -->
+    <div class="flex-shrink-0 bg-white px-4 pt-12 pb-4 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div id="profile-avatar" class="w-14 h-14 rounded-full bg-brand-light flex items-center justify-center text-brand text-2xl flex-shrink-0">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="flex-1">
+          <h3 id="profile-name" class="font-extrabold text-base">Olá, visitante!</h3>
+          <span id="profile-email" class="text-xs text-gray-400"></span>
+        </div>
+        <button id="btn-login-logout" onclick="handleAuthBtn()" class="px-4 py-1.5 rounded-full text-xs font-bold bg-brand-light text-brand">Entrar</button>
+      </div>
     </div>
 
-    <div class="profile-scroll">
-      <div class="menu-group">
-        <div class="menu-group-title">Minha Conta</div>
-        <button class="menu-item">
-          <span class="menu-icon red"><i class="fa-solid fa-heart"></i></span>
-          <span class="menu-label">Favoritos</span>
-          <i class="fa-solid fa-chevron-right menu-arrow"></i>
-        </button>
-        <button class="menu-item">
-          <span class="menu-icon red"><i class="fa-solid fa-bag-shopping"></i></span>
-          <span class="menu-label">Meus Pedidos</span>
-          <i class="fa-solid fa-chevron-right menu-arrow"></i>
-        </button>
-        <button class="menu-item">
-          <span class="menu-icon red"><i class="fa-solid fa-map-pin"></i></span>
-          <span class="menu-label">Endereços</span>
-          <i class="fa-solid fa-chevron-right menu-arrow"></i>
-        </button>
+    <div class="scroll-y flex-1 pb-20">
+      <!-- Lojista link -->
+      <div id="lojista-entry" class="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 p-4 flex items-center gap-3 cursor-pointer" onclick="navigate('lojista')">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg">🏪</div>
+        <div class="flex-1">
+          <div class="font-bold text-white text-sm">Painel do Lojista</div>
+          <div class="text-white/80 text-xs">Gerencie sua loja e pedidos</div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-white/60"></i>
       </div>
 
-      <div class="menu-group">
-        <div class="menu-group-title">Suporte</div>
-        <button class="menu-item">
-          <span class="menu-icon gray"><i class="fa-solid fa-headset"></i></span>
-          <span class="menu-label">Ajuda</span>
-          <i class="fa-solid fa-chevron-right menu-arrow"></i>
-        </button>
-        <button class="menu-item">
-          <span class="menu-icon gray"><i class="fa-solid fa-shield-halved"></i></span>
-          <span class="menu-label">Privacidade</span>
-          <i class="fa-solid fa-chevron-right menu-arrow"></i>
-        </button>
+      <!-- Menu groups -->
+      <div class="mt-4">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-4 mb-2">Minha Conta</p>
+        <div class="bg-white rounded-2xl mx-4 overflow-hidden divide-y divide-gray-100">
+          <button onclick="navigate('orders')" class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+            <span class="w-9 h-9 rounded-xl bg-brand-light flex items-center justify-center text-brand"><i class="fa-solid fa-bag-shopping text-sm"></i></span>
+            <span class="flex-1 text-sm font-semibold">Meus Pedidos</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </button>
+          <button class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+            <span class="w-9 h-9 rounded-xl bg-brand-light flex items-center justify-center text-brand"><i class="fa-solid fa-heart text-sm"></i></span>
+            <span class="flex-1 text-sm font-semibold">Favoritos</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </button>
+          <button class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+            <span class="w-9 h-9 rounded-xl bg-brand-light flex items-center justify-center text-brand"><i class="fa-solid fa-map-pin text-sm"></i></span>
+            <span class="flex-1 text-sm font-semibold">Endereços</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </button>
+        </div>
       </div>
 
-      <button class="menu-item partner-btn" onclick="togglePartner()">
-        <span class="menu-icon gold"><i class="fa-solid fa-handshake"></i></span>
-        <span class="menu-label">Quero ser um parceiro</span>
-        <i class="fa-solid fa-chevron-right menu-arrow" id="partner-arrow"></i>
+      <div class="mt-4">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-4 mb-2">Suporte e Legal</p>
+        <div class="bg-white rounded-2xl mx-4 overflow-hidden divide-y divide-gray-100">
+          <button class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+            <span class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500"><i class="fa-solid fa-headset text-sm"></i></span>
+            <span class="flex-1 text-sm font-semibold">Ajuda e Suporte</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </button>
+          <button onclick="navigate('privacy')" class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors">
+            <span class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500"><i class="fa-solid fa-shield-halved text-sm"></i></span>
+            <span class="flex-1 text-sm font-semibold">Política de Privacidade</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Partner plans -->
+      <div class="mt-4 px-4">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Seja um Parceiro</p>
+        <div class="flex flex-col gap-3">
+          <!-- Silver -->
+          <div class="bg-white rounded-2xl p-4 border-2 border-gray-200">
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-base">🥈 Plano Prata</span>
+              <div class="text-right"><span class="text-xl font-black">R$ 29,90</span><span class="text-xs text-gray-400">/mês</span></div>
+            </div>
+            <ul class="text-xs text-gray-600 font-medium space-y-1.5 mb-4">
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Perfil na plataforma</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Até 20 produtos</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Suporte por e-mail</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Relatórios básicos</li>
+            </ul>
+            <button onclick="openCheckout('Prata','29,90')" class="w-full py-3 rounded-xl bg-gray-600 text-white text-sm font-bold">Assinar Plano Prata</button>
+          </div>
+          <!-- Gold -->
+          <div class="bg-white rounded-2xl p-4 border-2 border-amber-400 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">⭐ Mais Popular</div>
+            <div class="flex items-center justify-between mb-3 mt-2">
+              <span class="font-bold text-base">🥇 Plano Ouro</span>
+              <div class="text-right"><span class="text-xl font-black">R$ 69,90</span><span class="text-xs text-gray-400">/mês</span></div>
+            </div>
+            <ul class="text-xs text-gray-600 font-medium space-y-1.5 mb-4">
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Destaque no app</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Produtos ilimitados</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Suporte prioritário</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Relatórios avançados</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-check text-green-500"></i> Banner promocional</li>
+            </ul>
+            <button onclick="openCheckout('Ouro','69,90')" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-white text-sm font-bold">Assinar Plano Ouro</button>
+          </div>
+        </div>
+      </div>
+      <div class="h-4"></div>
+    </div>
+  </section>
+
+  <!-- ══ SCREEN: LOJISTA PANEL ══ -->
+  <section id="screen-lojista" class="screen hidden flex flex-col flex-1 overflow-hidden">
+    <div class="flex-shrink-0 bg-white px-4 pt-12 pb-3 shadow-sm flex items-center gap-3">
+      <button onclick="navigate('profile')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+        <i class="fa-solid fa-arrow-left text-sm"></i>
       </button>
+      <div class="flex-1">
+        <h2 class="text-lg font-extrabold">Painel do Lojista</h2>
+        <p id="lojista-store-name" class="text-xs text-gray-400 font-medium">Carregando...</p>
+      </div>
+      <!-- Store open/close toggle -->
+      <div class="flex flex-col items-center gap-1">
+        <label class="relative inline-flex items-center cursor-pointer" id="store-toggle-label">
+          <input type="checkbox" id="store-open-toggle" class="sr-only" onchange="toggleStoreStatus(this.checked)"/>
+          <div class="w-14 h-7 bg-gray-300 toggle-track rounded-full"></div>
+          <div class="toggle-thumb absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-sm"></div>
+        </label>
+        <span id="store-status-label" class="text-[10px] font-bold text-gray-500 uppercase">Fechada</span>
+      </div>
+    </div>
 
-      <!-- Planos -->
-      <div id="partner-panel" class="partner-panel hidden">
-        <div class="partner-panel-header">
-          <h3>🌿 Planos de Parceria</h3>
-          <p>Apareça para milhares de clientes em Cipó!</p>
+    <div class="scroll-y flex-1 pb-4">
+      <!-- Tabs -->
+      <div class="flex bg-white border-b border-gray-100">
+        <button onclick="lojistaTab('pedidos')" id="tab-pedidos" class="flex-1 py-3 text-sm font-bold border-b-2 border-brand text-brand">📋 Pedidos</button>
+        <button onclick="lojistaTab('cardapio')" id="tab-cardapio" class="flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent">🍽️ Cardápio</button>
+        <button onclick="lojistaTab('financeiro')" id="tab-financeiro" class="flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent">💰 Financeiro</button>
+        <button onclick="lojistaTab('config')" id="tab-config" class="flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent">⚙️ Config</button>
+      </div>
+
+      <!-- TAB: PEDIDOS -->
+      <div id="lojista-pedidos" class="px-4 pt-4">
+        <div id="lojista-orders-list" class="flex flex-col gap-3">
+          <div class="h-24 skeleton w-full"></div>
+          <div class="h-24 skeleton w-full"></div>
         </div>
-
-        <div class="plan-card silver">
-          <div class="plan-header">
-            <span class="plan-badge">🥈 Prata</span>
-            <div class="plan-price">
-              <span class="price-val">R$ 29,90</span>
-              <span class="price-per">/mês</span>
-            </div>
-          </div>
-          <ul class="plan-features">
-            <li><i class="fa-solid fa-check"></i> Perfil na plataforma</li>
-            <li><i class="fa-solid fa-check"></i> Até 20 produtos</li>
-            <li><i class="fa-solid fa-check"></i> Suporte por e-mail</li>
-            <li><i class="fa-solid fa-check"></i> Relatórios básicos</li>
-          </ul>
-          <button class="plan-btn silver-btn" onclick="checkout('Prata','29,90')">Assinar Plano Prata</button>
-        </div>
-
-        <div class="plan-card gold">
-          <div class="plan-popular-tag">⭐ Mais Popular</div>
-          <div class="plan-header">
-            <span class="plan-badge">🥇 Ouro</span>
-            <div class="plan-price">
-              <span class="price-val">R$ 69,90</span>
-              <span class="price-per">/mês</span>
-            </div>
-          </div>
-          <ul class="plan-features">
-            <li><i class="fa-solid fa-check"></i> Destaque no app</li>
-            <li><i class="fa-solid fa-check"></i> Produtos ilimitados</li>
-            <li><i class="fa-solid fa-check"></i> Suporte prioritário</li>
-            <li><i class="fa-solid fa-check"></i> Relatórios avançados</li>
-            <li><i class="fa-solid fa-check"></i> Banner promocional</li>
-          </ul>
-          <button class="plan-btn gold-btn" onclick="checkout('Ouro','69,90')">Assinar Plano Ouro</button>
+        <div id="lojista-orders-empty" class="hidden py-16 text-center">
+          <div class="text-5xl mb-3">🎉</div>
+          <p class="font-bold text-gray-600">Nenhum pedido ainda</p>
+          <p class="text-sm text-gray-400 mt-1">Aguardando novos pedidos...</p>
         </div>
       </div>
 
-      <div style="height:30px"></div>
+      <!-- TAB: CARDÁPIO -->
+      <div id="lojista-cardapio" class="hidden px-4 pt-4">
+        <button onclick="openProductModal()" class="w-full py-3.5 rounded-2xl bg-brand text-white font-bold text-sm flex items-center justify-center gap-2 mb-4">
+          <i class="fa-solid fa-plus"></i> Adicionar Novo Produto
+        </button>
+
+        <!-- Delivery fee config -->
+        <div class="bg-white rounded-2xl p-4 mb-4">
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Taxa de Entrega</p>
+          <div class="flex gap-3 items-center">
+            <div class="flex-1 flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+              <span class="text-sm text-gray-500 font-medium">R$</span>
+              <input type="number" id="delivery-fee-input" placeholder="0,00" step="0.5" min="0"
+                class="flex-1 bg-transparent text-sm font-bold focus:outline-none"/>
+            </div>
+            <button onclick="saveDeliveryFee()" class="px-4 py-2 bg-brand text-white rounded-xl text-sm font-bold">Salvar</button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Use 0 para frete grátis</p>
+        </div>
+
+        <div id="products-manage-list" class="flex flex-col gap-3">
+          <div class="h-20 skeleton w-full"></div>
+          <div class="h-20 skeleton w-full"></div>
+        </div>
+        <div id="products-manage-empty" class="hidden py-12 text-center">
+          <p class="text-gray-500 font-medium">Nenhum produto cadastrado</p>
+        </div>
+      </div>
+
+      <!-- TAB: FINANCEIRO -->
+      <div id="lojista-financeiro" class="hidden px-4 pt-4">
+        <div class="bg-white rounded-2xl p-4 mb-3">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Extrato do Período</p>
+          <div id="financeiro-content" class="flex flex-col gap-3">
+            <div class="h-16 skeleton w-full"></div>
+            <div class="h-16 skeleton w-full"></div>
+          </div>
+        </div>
+        <!-- Summary -->
+        <div id="financeiro-summary" class="bg-white rounded-2xl p-4 divide-y divide-gray-100">
+          <div class="flex justify-between items-center py-2.5">
+            <span class="text-sm text-gray-600 font-medium">Valor Bruto</span>
+            <span id="fin-bruto" class="text-sm font-bold">R$ 0,00</span>
+          </div>
+          <div class="flex justify-between items-center py-2.5">
+            <span class="text-sm text-gray-600 font-medium">Comissão App (5%)</span>
+            <span id="fin-comissao" class="text-sm font-bold text-brand">- R$ 0,00</span>
+          </div>
+          <div class="flex justify-between items-center py-2.5">
+            <span class="text-sm font-extrabold">Valor Líquido</span>
+            <span id="fin-liquido" class="text-lg font-black text-green-600">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: CONFIG -->
+      <div id="lojista-config" class="hidden px-4 pt-4">
+        <div class="bg-white rounded-2xl p-4">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Dados da Loja</p>
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Nome da Loja</label>
+              <input id="cfg-store-name" type="text" class="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Categoria do Momento</label>
+              <select id="cfg-store-moment" class="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none">
+                <option value="todos">Todos os momentos</option>
+                <option value="almoco">☀️ Almoço</option>
+                <option value="jantar">🌆 Jantar</option>
+                <option value="lanches">🍔 Lanches</option>
+                <option value="bebidas">🥤 Bebidas</option>
+                <option value="madruga">🌙 Madruga</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Tempo de Preparo (min)</label>
+              <input id="cfg-prep-time" type="number" min="5" max="120" class="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Emoji da Loja</label>
+              <input id="cfg-store-emoji" type="text" maxlength="4" placeholder="🍕" class="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none"/>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Descrição</label>
+              <textarea id="cfg-store-desc" rows="3" class="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none resize-none"></textarea>
+            </div>
+            <button onclick="saveStoreConfig()" class="w-full py-3 bg-brand text-white rounded-xl font-bold text-sm">Salvar Configurações</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="navigate('home')" id="nav-home">
-      <i class="fa-solid fa-house"></i><span>Início</span>
+  <!-- ══ SCREEN: PRIVACY ══ -->
+  <section id="screen-privacy" class="screen hidden flex flex-col flex-1 overflow-hidden">
+    <div class="flex-shrink-0 bg-white px-4 pt-12 pb-3 shadow-sm flex items-center gap-3">
+      <button onclick="navigate('profile')" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+        <i class="fa-solid fa-arrow-left text-sm"></i>
+      </button>
+      <h2 class="text-lg font-extrabold">Política de Privacidade</h2>
+    </div>
+    <div class="scroll-y flex-1 px-4 pt-4 pb-8">
+      <div class="bg-white rounded-2xl p-5 text-sm text-gray-700 leading-relaxed space-y-4">
+        <p class="text-xs text-gray-400 font-medium">Última atualização: Janeiro de 2025</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">1. Quem Somos</h3>
+        <p>O <strong>Cipó Delivery</strong> é uma plataforma digital de intermediação de pedidos de delivery operada em Cipó, Bahia, Brasil. Nosso CNPJ, endereço e contato estão disponíveis pelo suporte.</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">2. Dados que Coletamos</h3>
+        <p>Coletamos os seguintes dados pessoais:</p>
+        <ul class="list-disc pl-4 space-y-1 text-gray-600">
+          <li><strong>Dados de cadastro:</strong> nome, e-mail e foto de perfil (via Google Sign-In).</li>
+          <li><strong>Dados de pedido:</strong> itens solicitados, valor, endereço de entrega e horário.</li>
+          <li><strong>Dados de pagamento:</strong> processados exclusivamente pelo Mercado Pago. Não armazenamos dados de cartão em nossos servidores.</li>
+          <li><strong>Dados de localização:</strong> apenas para exibir o mapa de lojas (não rastreamos sua localização em tempo real).</li>
+          <li><strong>Dados de uso:</strong> logs de acesso, dispositivo e navegador para fins de segurança e melhoria do serviço.</li>
+        </ul>
+
+        <h3 class="font-extrabold text-gray-900 text-base">3. Finalidade do Tratamento</h3>
+        <ul class="list-disc pl-4 space-y-1 text-gray-600">
+          <li>Processar e gerenciar seus pedidos de delivery.</li>
+          <li>Confirmar pagamentos via Pix com segurança automática.</li>
+          <li>Comunicar atualizações de status do pedido.</li>
+          <li>Prevenir fraudes e garantir a segurança da plataforma.</li>
+          <li>Cumprir obrigações legais e regulatórias.</li>
+        </ul>
+
+        <h3 class="font-extrabold text-gray-900 text-base">4. Base Legal (LGPD)</h3>
+        <p>O tratamento dos seus dados é baseado no <strong>Art. 7º da Lei 13.709/2020 (LGPD)</strong>: execução de contrato (pedido realizado), legítimo interesse do controlador (segurança e prevenção a fraudes) e cumprimento de obrigação legal.</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">5. Segurança das Transações</h3>
+        <p>Todas as transações financeiras são processadas pelo <strong>Mercado Pago</strong>, certificado PCI-DSS nível 1. Os pagamentos via Pix são confirmados automaticamente via webhook antes de qualquer pedido ser registrado no sistema, eliminando risco de golpes. Nossa plataforma utiliza Firebase com regras de segurança Firestore para proteger os dados em trânsito e em repouso (criptografia AES-256).</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">6. Compartilhamento de Dados</h3>
+        <p>Seus dados são compartilhados <strong>somente</strong> com:</p>
+        <ul class="list-disc pl-4 space-y-1 text-gray-600">
+          <li><strong>O lojista responsável:</strong> recebe nome e detalhes do pedido para preparação.</li>
+          <li><strong>Mercado Pago:</strong> para processar o pagamento.</li>
+          <li><strong>Google Firebase:</strong> para autenticação e armazenamento seguro.</li>
+        </ul>
+        <p>Não vendemos, alugamos ou compartilhamos dados com terceiros para fins publicitários.</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">7. Seus Direitos (LGPD)</h3>
+        <p>Você tem direito a:</p>
+        <ul class="list-disc pl-4 space-y-1 text-gray-600">
+          <li>Confirmar a existência de tratamento dos seus dados.</li>
+          <li>Acessar seus dados pessoais a qualquer momento.</li>
+          <li>Corrigir dados incompletos, inexatos ou desatualizados.</li>
+          <li>Solicitar a anonimização, bloqueio ou eliminação dos dados.</li>
+          <li>Portabilidade dos dados a outro fornecedor de serviço.</li>
+          <li>Revogar o consentimento a qualquer momento.</li>
+        </ul>
+
+        <h3 class="font-extrabold text-gray-900 text-base">8. Retenção de Dados</h3>
+        <p>Mantemos seus dados pelo prazo necessário à prestação do serviço e cumprimento de obrigações legais — em geral, 5 anos para dados fiscais e 90 dias para logs de acesso.</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">9. Cookies e Tecnologias Similares</h3>
+        <p>Utilizamos localStorage e sessionStorage para manter preferências de sessão (carrinho de compras) no dispositivo do usuário. Não utilizamos cookies de rastreamento de terceiros.</p>
+
+        <h3 class="font-extrabold text-gray-900 text-base">10. Contato e DPO</h3>
+        <p>Para exercer seus direitos ou tirar dúvidas sobre privacidade, entre em contato pelo e-mail: <strong>privacidade@cipodelivery.com.br</strong> ou pelo WhatsApp disponível no suporte do app.</p>
+
+        <div class="mt-6 pt-4 border-t border-gray-100 text-center">
+          <p class="text-xs text-gray-400">Cipó Delivery © 2025 · Todos os direitos reservados</p>
+          <p class="text-xs text-gray-400 mt-1">Conforme Lei 13.709/2020 – LGPD</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="flex-shrink-0 bg-white border-t border-gray-100 flex items-center px-2 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] z-50" style="height:64px">
+    <button onclick="navigate('home')" id="nav-home" class="bnav-btn active flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors">
+      <i class="bnav-icon fa-solid fa-house text-xl text-brand transition-colors"></i>
+      <span class="bnav-label text-[10px] font-bold text-brand">Início</span>
+      <span class="bnav-dot block w-1 h-1 rounded-full bg-brand"></span>
     </button>
-    <button class="nav-btn" onclick="navigate('map')" id="nav-map">
-      <i class="fa-solid fa-map-location-dot"></i><span>Mapa</span>
+    <button onclick="navigate('map')" id="nav-map" class="bnav-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors">
+      <i class="bnav-icon fa-solid fa-map-location-dot text-xl text-gray-400 transition-colors"></i>
+      <span class="bnav-label text-[10px] font-semibold text-gray-400">Mapa</span>
+      <span class="bnav-dot hidden w-1 h-1 rounded-full bg-brand"></span>
     </button>
-    <button class="nav-btn" onclick="navigate('profile')" id="nav-profile">
-      <i class="fa-solid fa-user"></i><span>Perfil</span>
+    <button onclick="navigate('orders')" id="nav-orders" class="bnav-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors">
+      <i class="bnav-icon fa-solid fa-bag-shopping text-xl text-gray-400 transition-colors"></i>
+      <span class="bnav-label text-[10px] font-semibold text-gray-400">Pedidos</span>
+      <span class="bnav-dot hidden w-1 h-1 rounded-full bg-brand"></span>
+    </button>
+    <button onclick="navigate('profile')" id="nav-profile" class="bnav-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors">
+      <i class="bnav-icon fa-solid fa-user text-xl text-gray-400 transition-colors"></i>
+      <span class="bnav-label text-[10px] font-semibold text-gray-400">Perfil</span>
+      <span class="bnav-dot hidden w-1 h-1 rounded-full bg-brand"></span>
     </button>
   </nav>
-
 </div><!-- end app -->
 
-<!-- CHECKOUT MODAL -->
-<div id="checkout-modal" class="modal-overlay hidden" onclick="closeModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeCheckoutModal()"><i class="fa-solid fa-xmark"></i></button>
-    <div class="modal-icon">🎉</div>
-    <h3 id="modal-title">Plano Selecionado!</h3>
-    <p id="modal-price" class="modal-plan-price"></p>
-    <p class="modal-desc">Entraremos em contato pelo WhatsApp para finalizar seu cadastro como parceiro!</p>
-    <a href="https://wa.me/5575999999999?text=Quero+ser+parceiro+do+Cipó+Delivery!" target="_blank" class="modal-whatsapp-btn">
-      <i class="fa-brands fa-whatsapp"></i> Falar no WhatsApp
-    </a>
-    <button class="modal-cancel" onclick="closeCheckoutModal()">Cancelar</button>
+<!-- ══════════ CART DRAWER ══════════ -->
+<div id="cart-overlay" class="hidden fixed inset-0 z-[800] bg-black/50 backdrop-blur-sm" onclick="closeCart()"></div>
+<div id="cart-drawer" class="hidden fixed bottom-0 left-0 right-0 z-[900] bg-white rounded-t-3xl shadow-2xl max-w-[480px] mx-auto animate-slideUp" style="max-height:80vh">
+  <div class="flex flex-col h-full" style="max-height:80vh">
+    <div class="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
+      <h3 class="text-lg font-extrabold">Meu Carrinho</h3>
+      <button onclick="closeCart()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+    <div id="cart-items" class="scroll-y flex-1 px-5 pb-2 flex flex-col gap-3"></div>
+    <div id="cart-empty" class="hidden flex-1 flex flex-col items-center justify-center py-8">
+      <div class="text-5xl mb-3">🛒</div>
+      <p class="font-bold text-gray-600">Carrinho vazio</p>
+      <p class="text-sm text-gray-400 mt-1">Adicione itens para continuar</p>
+    </div>
+    <div id="cart-footer" class="hidden flex-shrink-0 px-5 pb-8 pt-3 border-t border-gray-100">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-sm text-gray-500 font-medium">Subtotal</span>
+        <span id="cart-subtotal" class="text-sm font-bold"></span>
+      </div>
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-sm text-gray-500 font-medium">Taxa de entrega</span>
+        <span id="cart-delivery" class="text-sm font-bold"></span>
+      </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-extrabold">Total</span>
+        <span id="cart-total" class="text-xl font-black text-brand"></span>
+      </div>
+      <button onclick="proceedCheckout()" class="w-full py-4 bg-brand text-white rounded-2xl font-extrabold text-base">
+        Finalizar Pedido · Pagar via Pix
+      </button>
+    </div>
   </div>
 </div>
 
-<script>
-  // Splash
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      const splash = document.getElementById('splash');
-      splash.classList.add('fade-out');
-      setTimeout(() => {
-        splash.classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-      }, 500);
-    }, 1800);
-  });
+<!-- ══════════ LOGIN MODAL ══════════ -->
+<div id="login-modal" class="hidden fixed inset-0 z-[900] bg-black/60 flex items-end justify-center" onclick="closeLoginModal(event)">
+  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-6 animate-slideUp">
+    <h3 class="text-xl font-extrabold mb-1">Entrar para continuar</h3>
+    <p class="text-sm text-gray-500 mb-6">Faça login para finalizar seu pedido com segurança.</p>
+    <button onclick="doLogin()" class="w-full py-3.5 rounded-2xl bg-white border-2 border-gray-200 flex items-center justify-center gap-3 font-bold text-sm hover:bg-gray-50 transition-colors">
+      <img src="https://www.google.com/favicon.ico" class="w-5 h-5"/> Continuar com Google
+    </button>
+    <button onclick="closeLoginModal()" class="w-full mt-3 py-3 text-sm text-gray-400 font-semibold">Cancelar</button>
+  </div>
+</div>
 
-  // Navigation
-  let mapInitialized = false;
-  function navigate(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('screen-' + screen).classList.add('active');
-    document.getElementById('nav-' + screen).classList.add('active');
-    if (screen === 'map' && !mapInitialized) {
-      initMap();
-      mapInitialized = true;
-    }
-  }
+<!-- ══════════ PIX PAYMENT MODAL ══════════ -->
+<div id="pix-modal" class="hidden fixed inset-0 z-[900] bg-black/60 flex items-end justify-center" onclick="closePixModal(event)">
+  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-6 animate-slideUp">
+    <div class="text-center mb-4">
+      <div class="text-4xl mb-2">💸</div>
+      <h3 class="text-xl font-extrabold">Pagar com Pix</h3>
+      <p class="text-sm text-gray-500 mt-1">Escaneie o QR Code ou copie o código</p>
+    </div>
 
-  // Map (Leaflet)
-  function initMap() {
-    const cipo = [-10.8023, -38.5158];
-    const map = L.map('map', { center: cipo, zoom: 15, zoomControl: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap © CARTO',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
+    <!-- Pix QR placeholder -->
+    <div class="bg-gray-100 rounded-2xl p-6 flex flex-col items-center gap-3 mb-4">
+      <div id="pix-qr-code" class="w-40 h-40 bg-white rounded-xl flex items-center justify-center text-gray-400 text-xs text-center p-3 border border-gray-200">
+        QR Code gerado pela API do Mercado Pago
+      </div>
+      <div class="w-full">
+        <p class="text-xs text-gray-500 font-medium mb-1 text-center">Código Pix (copia e cola)</p>
+        <div class="flex gap-2">
+          <div id="pix-code" class="flex-1 bg-white rounded-xl px-3 py-2 text-xs font-mono text-gray-600 border border-gray-200 truncate">
+            Aguardando geração...
+          </div>
+          <button onclick="copyPixCode()" class="w-10 h-10 bg-brand text-white rounded-xl flex items-center justify-center text-sm flex-shrink-0">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
-    const premiumIcon = L.divIcon({
-      className: '',
-      html: `<div class="map-marker premium-marker"><i class="fa-solid fa-star"></i></div>`,
-      iconSize: [42, 42], iconAnchor: [21, 42]
-    });
-    const standardIcon = L.divIcon({
-      className: '',
-      html: `<div class="map-marker standard-marker"><i class="fa-solid fa-utensils"></i></div>`,
-      iconSize: [38, 38], iconAnchor: [19, 38]
-    });
+    <!-- Total -->
+    <div class="flex justify-between items-center bg-gray-50 rounded-xl px-4 py-3 mb-4">
+      <span class="font-semibold text-sm text-gray-600">Total a pagar</span>
+      <span id="pix-total" class="font-black text-xl text-brand"></span>
+    </div>
 
-    L.marker([-10.8023, -38.5158], { icon: premiumIcon }).addTo(map)
-      .bindPopup('<b>🌟 Pizzaria do Zé</b><br>Parceiro Premium<br><small>Aberto agora · 4.8 ⭐</small>');
-    L.marker([-10.8050, -38.5180], { icon: standardIcon }).addTo(map)
-      .bindPopup('<b>🍔 Burguer Cipó</b><br>Parceiro Padrão<br><small>Aberto agora · 4.6 ⭐</small>');
-    L.marker([-10.8000, -38.5140], { icon: standardIcon }).addTo(map)
-      .bindPopup('<b>🫐 Açaí da Serra</b><br>Parceiro Padrão<br><small>Aberto agora · 4.9 ⭐</small>');
+    <!-- Status -->
+    <div id="pix-status" class="flex items-center gap-2 justify-center py-2 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50 mb-4">
+      <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+      Aguardando confirmação do banco...
+    </div>
 
-    L.circle(cipo, {
-      radius: 1500,
-      color: '#EA1D2C', fillColor: '#EA1D2C',
-      fillOpacity: 0.06, weight: 1.5, dashArray: '6,6'
-    }).addTo(map);
-  }
+    <p class="text-xs text-center text-gray-400">⚠️ O pedido só é confirmado após o pagamento. Sistema anti-golpe ativo.</p>
+    <button onclick="closePixModal()" class="w-full mt-3 py-3 text-sm text-gray-400 font-semibold">Cancelar</button>
+  </div>
+</div>
 
-  // Category filter
-  function filterCategory(btn, category) {
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.restaurant-card').forEach(card => {
-      const show = category === 'todos' || card.dataset.category === category;
-      card.style.display = show ? 'flex' : 'none';
-      if (show) card.style.animation = 'fadeInUp 0.3s ease both';
-    });
-  }
+<!-- ══════════ PRODUCT MODAL (Lojista) ══════════ -->
+<div id="product-modal" class="hidden fixed inset-0 z-[900] bg-black/60 flex items-end justify-center" onclick="closeProductModal(event)">
+  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-6 pb-8 animate-slideUp scroll-y" style="max-height:85vh">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="product-modal-title" class="text-lg font-extrabold">Novo Produto</h3>
+      <button onclick="closeProductModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+    <div class="flex flex-col gap-4">
+      <div>
+        <label class="text-xs font-bold text-gray-500 block mb-1">Nome do Produto *</label>
+        <input id="prod-name" type="text" placeholder="Ex: Pizza Margherita" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-500 block mb-1">Descrição</label>
+        <textarea id="prod-desc" rows="2" placeholder="Ingredientes, tamanho, etc." class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-medium focus:outline-none resize-none"></textarea>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="text-xs font-bold text-gray-500 block mb-1">Preço (R$) *</label>
+          <input id="prod-price" type="number" step="0.01" min="0" placeholder="0,00" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+        </div>
+        <div class="flex-1">
+          <label class="text-xs font-bold text-gray-500 block mb-1">Nota (0–5)</label>
+          <input id="prod-rating" type="number" step="0.1" min="0" max="5" placeholder="4.8" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-500 block mb-1">Emoji / Foto URL</label>
+        <input id="prod-emoji" type="text" placeholder="🍕 ou URL da imagem" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/30"/>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-gray-500 block mb-1">Categoria</label>
+        <select id="prod-category" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm font-medium focus:outline-none">
+          <option value="almoco">☀️ Almoço</option>
+          <option value="jantar">🌆 Jantar</option>
+          <option value="lanches">🍔 Lanches</option>
+          <option value="bebidas">🥤 Bebidas</option>
+          <option value="madruga">🌙 Madruga</option>
+        </select>
+      </div>
+      <input type="hidden" id="prod-editing-id"/>
+      <button onclick="saveProduct()" class="w-full py-4 bg-brand text-white rounded-2xl font-extrabold text-sm mt-1">
+        Salvar Produto
+      </button>
+    </div>
+  </div>
+</div>
 
-  // Partner panel
-  function togglePartner() {
-    const panel = document.getElementById('partner-panel');
-    const arrow = document.getElementById('partner-arrow');
-    const open = panel.classList.toggle('hidden');
-    arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
-    if (!open) panel.style.animation = 'slideDown 0.35s ease forwards';
-  }
+<!-- ══════════ CHECKOUT MODAL (Plans) ══════════ -->
+<div id="checkout-modal" class="hidden fixed inset-0 z-[900] bg-black/60 flex items-end justify-center" onclick="closeCheckoutModalPlan(event)">
+  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-6 pb-10 animate-slideUp text-center">
+    <div class="text-5xl mb-3">🎉</div>
+    <h3 id="checkout-modal-title" class="text-xl font-extrabold mb-1"></h3>
+    <p id="checkout-modal-price" class="text-2xl font-black text-brand mb-2"></p>
+    <p class="text-sm text-gray-500 mb-5">Entraremos em contato pelo WhatsApp para finalizar seu cadastro!</p>
+    <a id="checkout-whatsapp-link" href="#" target="_blank" class="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-green-500 text-white font-extrabold text-base mb-3">
+      <i class="fa-brands fa-whatsapp text-xl"></i> Falar no WhatsApp
+    </a>
+    <button onclick="closeCheckoutModalPlan()" class="w-full py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold text-sm">Cancelar</button>
+  </div>
+</div>
 
-  // Checkout modal
-  function checkout(plan, price) {
-    document.getElementById('modal-title').textContent = `Plano ${plan} Selecionado! 🎉`;
-    document.getElementById('modal-price').textContent = `R$ ${price}/mês`;
-    const modal = document.getElementById('checkout-modal');
-    modal.classList.remove('hidden');
-  }
-  function closeCheckoutModal() {
-    document.getElementById('checkout-modal').classList.add('hidden');
-  }
-  function closeModal(e) {
-    if (e.target.id === 'checkout-modal') closeCheckoutModal();
-  }
-</script>
+<!-- ══════════ TOAST ══════════ -->
+<div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900 text-white px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl animate-fadeIn max-w-[360px] text-center"></div>
+
+<!-- ══════════ ORDER STATUS MODAL ══════════ -->
+<div id="order-status-modal" class="hidden fixed inset-0 z-[850] bg-black/60 flex items-end justify-center" onclick="closeOrderStatus(event)">
+  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-6 pb-8 animate-slideUp">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-extrabold">Status do Pedido</h3>
+      <button onclick="closeOrderStatus()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+    <div id="order-status-content"></div>
+  </div>
+</div>
+
+<!-- AUDIO: Caixa registradora -->
+<audio id="cash-register-sound" preload="auto">
+  <!-- Inline base64 short beep as fallback -->
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2ozLS1uwMzRpWk7Mi10vtjcr3VALi97y+DftYFGKy+FzOTktolRJyuM1ObmuZFYISeV3ernvZpgHySf5O/qw6NpIyOo6/Hty61xKCCw8fXvta10KBu49/j2vbd7KBi9/Pv6w8GAKRXC//386seAJhDD//z85MuFIhDB//z97dGJHx3B//397NOOHB3D//z57daQHhvC//395teSHxnB//v87dmVIBe///v67t2ZIhb///r47+CcIxT///n38OKfJBH///n28uSkJhH///n18+WmJxD///n18+apKA///5j08OerKA///5f28OevKQ7///aX9vHgrCkN///Wl/by4q0pDP//1pb388KvKAr//9WV/P3EsCcJ///TlfzAsSYI///SlPq9sSUI///SlPm6siQH///RlPi3siMG///RlPi1syIG///Rk/e0syEF///Rk/azsx8E///Rk/aysx4D///Qk/axsx0C///Qk/awsx0B///Qk/avsxwA///Qk/ausxsA" type="audio/wav">
+</audio>
+
+<script type="module" src="app.js"></script>
 </body>
 </html>
