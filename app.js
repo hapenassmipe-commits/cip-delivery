@@ -1,25 +1,35 @@
-// Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, onSnapshot, addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCa311hJpi9tZa1fWdkB98XCY9l5MxKAqM",
-    authDomain: "cipo-delivery.firebaseapp.com",
-    projectId: "cipo-delivery",
-    storageBucket: "cipo-delivery.firebasestorage.app",
-    messagingSenderId: "505497819804",
-    appId: "1:505497819804:web:bfa600870a5a44260b6b59",
-    measurementId: "G-DGLQ096TYR"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCa311hJpI9tZa1fWdkB9BXCY915MbXAqM",
+  authDomain: "cipo-delivery.firebaseapp.com",
+  projectId: "cipo-delivery",
+  storageBucket: "cipo-delivery.firebasestorage.app",
+  messagingSenderId: "505497819804",
+  appId: "1:505497819804:web:bfa600870a5a44260b6b59",
+  measurementId: "G-DGLQ096TYR"
+};
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-window._fb = { app, analytics };
+// Inicializa o Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// A PONTE MÁGICA (Isso aqui faz o código do Claude funcionar)
+window._fb = { 
+    app, 
+    analytics, 
+    auth, 
+    db, 
+    onAuthStateChanged, 
+    signInWithEmailAndPassword, 
+    signOut,
+    firestore: { doc, getDoc, collection, query, where, getDocs, onSnapshot, addDoc, updateDoc, serverTimestamp }
+};
 // ═══════════════════════════════════════════════════════
 //  CIPÓ DELIVERY · app.js
 //  SaaS Engine: Firebase, Cart, Orders, Lojista, Pix API
