@@ -1,35 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, onSnapshot, addDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCa311hJpI9tZa1fWdkB9BXCY915MbXAqM",
-  authDomain: "cipo-delivery.firebaseapp.com",
-  projectId: "cipo-delivery",
-  storageBucket: "cipo-delivery.firebasestorage.app",
-  messagingSenderId: "505497819804",
-  appId: "1:505497819804:web:bfa600870a5a44260b6b59",
-  measurementId: "G-DGLQ096TYR"
+  // COLE SUAS CHAVES AQUI DENTRO (apiKey, etc)
 };
 
-// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// A PONTE MÁGICA (Isso aqui faz o código do Claude funcionar)
-window._fb = { 
-    app, 
-    analytics, 
-    auth, 
-    db, 
-    onAuthStateChanged, 
-    signInWithEmailAndPassword, 
-    signOut,
-    firestore: { doc, getDoc, collection, query, where, getDocs, onSnapshot, addDoc, updateDoc, serverTimestamp }
-};
+window._fb = { app, auth, db, onAuthStateChanged };
 // ═══════════════════════════════════════════════════════
 //  CIPÓ DELIVERY · app.js
 //  SaaS Engine: Firebase, Cart, Orders, Lojista, Pix API
