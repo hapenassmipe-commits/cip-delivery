@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#EA1D2C"/>
+<title>Cipó Delivery — Painel do Lojista</title>
+<link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<script type="module">
+import { initializeApp }                                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut }         from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, onSnapshot,
+         addDoc, updateDoc, deleteDoc, getDoc, getDocs,
+         query, orderBy, where, serverTimestamp }        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
+// ── ⚙️  Mesmo config do index.html ──────────────────────────
+const firebaseConfig = {
+  apiKey:            "SUA_API_KEY",
+  authDomain:        "SEU_PROJETO.firebaseapp.com",
+  projectId:         "SEU_PROJETO",
+  storageBucket:     "SEU_PROJETO.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId:             "SEU_APP_ID"
+};
+
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
+
+window._fb2 = { auth, db, storage,
+  onAuthStateChanged, signOut,
+  collection, doc, onSnapshot, addDoc, updateDoc,
+  deleteDoc, getDoc, getDocs, query, orderBy,
+  where, serverTimestamp, ref, uploadBytes, getDownloadURL };
+</script>
+
+<style>
+/* Lojista panel extra styles (complement style.css) */
+.panel-header {
+  background: var(--white); padding: 52px 18px 0;
+  flex-shrink: 0; box-shadow: var(--shadow-sm);
+}
+.panel-top {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.panel-top h1 { font-size: 18px; font-weight: 800; flex: 1; }
+.panel-store-name { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+/* Toggle grande */
+.store-toggle-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border-radius: var(--radius-xl);
+  padding: 8px 14px; margin-bottom: 12px;
+}
+.store-toggle-wrap span { font-size: 13px; font-weight: 700; }
+.toggle-big { position: relative; width: 56px; height: 28px; flex-shrink: 0; }
+.toggle-big input { opacity: 0; width: 0; height: 0; }
+.toggle-track-big {
+  position: absolute; inset: 0; border-radius: 14px;
+  background: #ccc; cursor: pointer; transition: background .25s;
+}
+.toggle-big input:checked + .toggle-track-big { background: var(--green); }
+.toggle-thumb-big {
+  position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--white); box-shadow: var(--shadow-sm);
+  transition: transform .25s; pointer-events: none;
+}
+.toggle-big input:checked ~ .toggle-thumb-big { transform: translateX(28px); }
+
+/* Tabs */
+.panel-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.panel-tabs::-webkit-scrollbar { display: none; }
+.panel-tab {
+  flex: 1; padding: 12px 8px; text-align: center;
+  font-size: 12px; font-weight: 700; color: var(--text-muted);
+  border-bottom: 2px solid transparent; white-space: nowrap;
+  transition: all .2s; flex-shrink: 0;
+}
+.panel-tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+/* Product manage card */
+.prod-manage-card {
+  background: var(--white); border-radius: var(--radius-md);
+  padding: 12px; display: flex; gap: 10px; align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.prod-manage-emoji { font-size: 28px; flex-shrink: 0; }
+.prod-manage-info { flex: 1; min-width: 0; }
+.prod-manage-name { font-size: 13px; font-weight: 700; }
+.prod-manage-price { font-size: 12px; color: var(--text-muted); }
+.prod-manage-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.btn-icon {
+  width: 30px; height: 30px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.btn-icon.edit   { background: var(--bg); color: var(--text-secondary); }
+.btn-icon.delete { background: #FEF2F2; color: var(--red); }
+
+/* Mini toggle */
+.mini-toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.mini-toggle input { opacity: 0; width: 0; height: 0; }
+.mini-track {
+  position: absolute; inset: 0; border-radius: 11px;
+  background: #ccc; cursor: pointer; transition: background .25s;
+}
+.mini-toggle input:checked + .mini-track { background: var(--green); }
+.mini-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--white); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .25s; pointer-events: none;
+}
+.mini-toggle input:checked ~ .mini-thumb { transform: translateX(18px); }
+
+/* Order lojista card */
+.lojista-order-card {
+  background: var(--white); border-radius: var(--radius-md);
+  padding: 14px; box-shadow: var(--shadow-sm);
+  animation: fadeInUp .3s ease both;
+}
+.lojista-order-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.lojista-order-client { font-size: 14px; font-weight: 800; }
+.lojista-order-total { font-size: 14px; font-weight: 800; color: var(--red); }
+.lojista-order-items { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+.lojista-order-addr  { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+.order-actions { display: flex; gap: 8px; }
+.btn-advance {
+  flex: 1; padding: 9px; border-radius: var(--radius-md);
+  background: var(--red); color: var(--white);
+  font-size: 12px; font-weight: 700; text-align: center; cursor: pointer;
+}
+.btn-advance:active { opacity: .88; }
+.btn-status-label {
+  flex: 1; padding: 9px; border-radius: var(--radius-md);
+  background: var(--bg); font-size: 12px; font-weight: 700;
+  text-align: center; color: var(--text-secondary);
+}
+
+/* Financeiro */
+.fin-order-row {
+  display: flex; justify-content: space-between; padding: 10px 0;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.fin-order-row:last-child { border-bottom: none; }
+.fin-label { color: var(--text-secondary); font-weight: 500; }
+.fin-value { font-weight: 800; }
+.fin-summary-card {
+  background: var(--white); border-radius: var(--radius-md);
+  margin-top: 12px; overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.fin-summary-row {
+  display: flex; justify-content: space-between; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.fin-summary-row.total { font-size: 16px; font-weight: 800; background: none; border: none; }
+.fin-summary-row.total .fin-net { color: var(--green); font-size: 18px; }
+
+/* Admin panel */
+.admin-card {
+  background: var(--white); border-radius: var(--radius-md);
+  padding: 14px; box-shadow: var(--shadow-sm);
+}
+.admin-store-name { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+.admin-store-info { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+.btn-approve { background: var(--green); color: var(--white); padding: 9px 16px; border-radius: var(--radius-md); font-size: 12px; font-weight: 700; }
+.btn-reject  { background: #FEF2F2; color: var(--red); padding: 9px 16px; border-radius: var(--radius-md); font-size: 12px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div id="app" class="app hidden">
+
+  <!-- Header do painel -->
+  <div class="panel-header">
+    <div class="panel-top">
+      <a href="index.html" class="btn-back-inline" style="text-decoration:none"><i class="fa-solid fa-arrow-left"></i></a>
+      <div>
+        <h1>Painel do Lojista</h1>
+        <div id="panel-store-name" class="panel-store-name">Carregando...</div>
+      </div>
+      <!-- LOJA ABERTA/FECHADA -->
+      <div class="store-toggle-wrap" style="margin:0;padding:6px 12px">
+        <span id="toggle-label" style="font-size:11px">Fechada</span>
+        <label class="toggle-big">
+          <input type="checkbox" id="store-open-toggle" onchange="_toggleStore(this.checked)"/>
+          <div class="toggle-track-big"></div>
+          <div class="toggle-thumb-big"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="panel-tabs">
+      <button class="panel-tab active" id="ptab-pedidos"    onclick="pTab('pedidos')">📋 Pedidos</button>
+      <button class="panel-tab"        id="ptab-cardapio"   onclick="pTab('cardapio')">🍽️ Cardápio</button>
+      <button class="panel-tab"        id="ptab-financeiro" onclick="pTab('financeiro')">💰 Financeiro</button>
+      <button class="panel-tab"        id="ptab-config"     onclick="pTab('config')">⚙️ Config</button>
+      <button class="panel-tab"        id="ptab-admin"      onclick="pTab('admin')" style="color:var(--gold-dark)">🛡 Admin</button>
+    </div>
+  </div>
+
+  <!-- ── TAB: PEDIDOS ── -->
+  <div id="panel-pedidos" class="screen active" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-content" style="padding:14px 18px">
+      <div id="lojista-orders-list" class="restaurant-list" style="gap:12px">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+      <div id="lojista-orders-empty" class="empty-state hidden">
+        <div class="empty-icon">🎉</div><p>Nenhum pedido no momento</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CARDÁPIO ── -->
+  <div id="panel-cardapio" class="hidden" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-content" style="padding:14px 18px">
+      <button onclick="openProdModal()" class="btn-primary full" style="margin-bottom:14px">
+        <i class="fa-solid fa-plus"></i> Adicionar Novo Produto
+      </button>
+      <!-- Taxa de entrega -->
+      <div class="form-card" style="margin:0 0 14px">
+        <p class="form-section-title">Taxa de Entrega</p>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="flex:1;display:flex;align-items:center;gap:6px;background:var(--bg);padding:10px 14px;border-radius:var(--radius-md)">
+            <span style="font-size:13px;color:var(--text-muted);font-weight:600">R$</span>
+            <input type="number" id="fee-input" placeholder="0,00" step="0.5" min="0"
+              style="flex:1;background:transparent;padding:0;border-radius:0;font-weight:700"/>
+          </div>
+          <button onclick="_saveDeliveryFee()" class="btn-primary" style="padding:10px 16px">Salvar</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Use 0 para frete grátis</p>
+      </div>
+      <div id="prod-manage-list" style="display:flex;flex-direction:column;gap:10px">
+        <div class="skeleton-card small"></div><div class="skeleton-card small"></div>
+      </div>
+      <div id="prod-manage-empty" class="empty-state hidden"><p>Nenhum produto cadastrado</p></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: FINANCEIRO ── -->
+  <div id="panel-financeiro" class="hidden" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-content" style="padding:14px 18px">
+      <div class="form-card" style="margin:0 0 12px">
+        <p class="form-section-title">Extrato de Vendas</p>
+        <div id="fin-rows"><div class="skeleton-card"></div></div>
+      </div>
+      <div class="fin-summary-card">
+        <div class="fin-summary-row">
+          <span class="fin-label">Valor Bruto</span><span id="fin-bruto" class="fin-value">R$ 0,00</span>
+        </div>
+        <div class="fin-summary-row">
+          <span class="fin-label">Comissão App (5%)</span><span id="fin-comissao" class="fin-value" style="color:var(--red)">− R$ 0,00</span>
+        </div>
+        <div class="fin-summary-row total">
+          <span>Saldo Líquido</span><span id="fin-liquido" class="fin-net">R$ 0,00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CONFIG ── -->
+  <div id="panel-config" class="hidden" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-content" style="padding:14px 18px">
+      <div class="form-card" style="margin:0">
+        <p class="form-section-title">Dados da Loja</p>
+        <div class="form-group"><label>Nome da Loja</label><input id="cfg-name" type="text"/></div>
+        <div class="form-group"><label>Categoria / Momento</label>
+          <select id="cfg-moment">
+            <option value="almoco">☀️ Almoço</option><option value="jantar">🥘 Jantar</option>
+            <option value="lanches">🍔 Lanches</option><option value="bebidas">🥤 Bebidas</option>
+            <option value="madruga">🌙 Madruga</option>
+          </select>
+        </div>
+        <div class="form-group two-col">
+          <div><label>Tempo Preparo (min)</label><input id="cfg-prep" type="number" min="5" max="120"/></div>
+          <div><label>Emoji</label><input id="cfg-emoji" type="text" maxlength="4"/></div>
+        </div>
+        <div class="form-group"><label>WhatsApp</label><input id="cfg-whatsapp" type="tel" placeholder="75999999999"/></div>
+        <div class="form-group"><label>Horário de Funcionamento</label><input id="cfg-hours" type="text" placeholder="Seg–Sex 11h–22h"/></div>
+        <div class="form-group"><label>Descrição</label><textarea id="cfg-desc" rows="3"></textarea></div>
+        <button onclick="_saveConfig()" class="btn-primary full">Salvar Configurações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: ADMIN ── -->
+  <div id="panel-admin" class="hidden" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-content" style="padding:14px 18px">
+      <div style="background:var(--red-light);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:600">
+        🛡 Área restrita: apenas o administrador do app acessa esta seção.
+      </div>
+      <p class="form-section-title" style="padding:0 0 8px">Solicitações de Parceiro</p>
+      <div id="admin-requests" style="display:flex;flex-direction:column;gap:10px">
+        <div class="skeleton-card"></div>
+      </div>
+      <div id="admin-empty" class="empty-state hidden"><p>Nenhuma solicitação pendente</p></div>
+
+      <p class="form-section-title" style="padding:14px 0 8px">Gerenciar Banners</p>
+      <button onclick="openBannerModal()" class="btn-primary full" style="margin-bottom:14px">
+        <i class="fa-solid fa-plus"></i> Novo Banner
+      </button>
+      <div id="admin-banners" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- ═══ MODAL: PRODUTO ═══ -->
+<div id="prod-modal" class="modal-overlay hidden" onclick="closeProdModal(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 id="prod-modal-title">Novo Produto</h3>
+      <button onclick="closeProdModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="form-group"><label>Nome *</label><input id="pm-name" type="text" placeholder="Ex: Pizza Margherita"/></div>
+    <div class="form-group"><label>Descrição</label><textarea id="pm-desc" rows="2" placeholder="Ingredientes, tamanho..."></textarea></div>
+    <div class="form-group two-col">
+      <div><label>Preço (R$) *</label><input id="pm-price" type="number" step="0.01" min="0" placeholder="0,00"/></div>
+      <div><label>Nota (0–5)</label><input id="pm-rating" type="number" step="0.1" min="0" max="5" placeholder="4.8"/></div>
+    </div>
+    <div class="form-group"><label>Emoji</label><input id="pm-emoji" type="text" maxlength="4" placeholder="🍕"/></div>
+    <div class="form-group">
+      <label>Foto do Produto</label>
+      <div class="file-upload-area" onclick="document.getElementById('pm-photo').click()">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span id="pm-photo-label">Clique para enviar foto</span>
+      </div>
+      <input type="file" id="pm-photo" accept="image/*" class="hidden" onchange="handlePhotoSelect(this)"/>
+    </div>
+    <div class="form-group"><label>Categoria</label>
+      <select id="pm-category">
+        <option value="almoco">☀️ Almoço</option><option value="jantar">🥘 Jantar</option>
+        <option value="lanches">🍔 Lanches</option><option value="bebidas">🥤 Bebidas</option>
+        <option value="madruga">🌙 Madruga</option>
+      </select>
+    </div>
+    <input type="hidden" id="pm-edit-id"/>
+    <button onclick="_saveProd()" class="btn-primary full" style="margin-top:6px">Salvar Produto</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: BANNER ═══ -->
+<div id="banner-modal" class="modal-overlay hidden" onclick="closeBannerModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>Novo Banner</h3><button onclick="closeBannerModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label>Título *</label><input id="bm-title" type="text" placeholder="Frete grátis hoje!"/></div>
+    <div class="form-group"><label>Tag</label><input id="bm-tag" type="text" placeholder="🔥 Oferta do dia"/></div>
+    <div class="form-group"><label>CTA (botão)</label><input id="bm-cta" type="text" placeholder="Pedir agora"/></div>
+    <div class="form-group"><label>Emoji</label><input id="bm-emoji" type="text" maxlength="4" placeholder="🛵"/></div>
+    <div class="form-group"><label>Cor de fundo (CSS)</label><input id="bm-color" type="text" placeholder="linear-gradient(135deg,#EA1D2C,#C4141F)"/></div>
+    <div class="form-group"><label>Ordem</label><input id="bm-order" type="number" min="0" placeholder="0"/></div>
+    <button onclick="_saveBanner()" class="btn-primary full">Publicar Banner</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+<!-- AUDIO -->
+<audio id="cash-sound" preload="auto">
+  <source src="https://www.soundjay.com/misc/sounds/cash-register-1.mp3" type="audio/mpeg"/>
+</audio>
+
+<script>
+// ── Wait for Firebase ─────────────────────────────────────
+const _BOOT2 = setInterval(() => {
+  if (window._fb2) { clearInterval(_BOOT2); _boot2(); }
+}, 80);
+
+const P = { storeId: null, storeData: null, tab: 'pedidos', photoFile: null };
+const UNSUB2 = {};
+
+/* ── Boot ─────────────────────────────────────────────────── */
+function _boot2() {
+  const { auth, onAuthStateChanged } = _fb2;
+  onAuthStateChanged(auth, user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    P.user = user;
+    _loadLojistaStore(user.uid);
+    document.getElementById('app').classList.remove('hidden');
+  });
+}
+
+async function _loadLojistaStore(uid) {
+  const { db, collection, query, where, getDocs } = _fb2;
+  // Check admin
+  const adminSnap = await getDocs(query(collection(db,'admins'), where('uid','==',uid)));
+  P.isAdmin = !adminSnap.empty;
+  if (!P.isAdmin) document.getElementById('ptab-admin').style.display = 'none';
+
+  try {
+    const snap = await getDocs(query(collection(db,'stores'), where('ownerId','==',uid)));
+    if (snap.empty) { document.getElementById('panel-store-name').textContent = 'Loja não cadastrada'; return; }
+    const d = snap.docs[0];
+    P.storeId   = d.id;
+    P.storeData = d.data();
+    document.getElementById('panel-store-name').textContent = P.storeData.name || 'Minha Loja';
+    document.getElementById('store-open-toggle').checked = !!P.storeData.isOpen;
+    document.getElementById('toggle-label').textContent = P.storeData.isOpen ? 'Aberta' : 'Fechada';
+    document.getElementById('fee-input').value = P.storeData.deliveryFee ?? '';
+    // Config fields
+    document.getElementById('cfg-name').value     = P.storeData.name || '';
+    document.getElementById('cfg-moment').value   = P.storeData.moment || 'almoco';
+    document.getElementById('cfg-prep').value     = P.storeData.prepTime || 30;
+    document.getElementById('cfg-emoji').value    = P.storeData.emoji || '';
+    document.getElementById('cfg-whatsapp').value = P.storeData.whatsapp || '';
+    document.getElementById('cfg-hours').value    = P.storeData.hours || '';
+    document.getElementById('cfg-desc').value     = P.storeData.description || '';
+
+    _loadPanelOrders();
+    _loadPanelProducts();
+    _loadFinanceiro();
+    if (P.isAdmin) { _loadAdminRequests(); _loadAdminBanners(); }
+  } catch(e) { _toast('Erro ao carregar loja: ' + e.message, true); }
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+function pTab(tab) {
+  ['pedidos','cardapio','financeiro','config','admin'].forEach(t => {
+    document.getElementById('ptab-'+t)?.classList.toggle('active', t===tab);
+    document.getElementById('panel-'+t)?.classList.toggle('hidden', t!==tab);
+  });
+  P.tab = tab;
+}
+
+/* ── Toggle Loja ─────────────────────────────────────────── */
+async function _toggleStore(isOpen) {
+  if (!P.storeId) return;
+  const { db, doc, updateDoc } = _fb2;
+  await updateDoc(doc(db,'stores',P.storeId), { isOpen });
+  document.getElementById('toggle-label').textContent = isOpen ? 'Aberta' : 'Fechada';
+  _toast(isOpen ? '🟢 Loja aberta!' : '🔴 Loja fechada.');
+}
+
+/* ── Taxa de Entrega ─────────────────────────────────────── */
+async function _saveDeliveryFee() {
+  if (!P.storeId) return;
+  const { db, doc, updateDoc } = _fb2;
+  const fee = parseFloat(document.getElementById('fee-input').value) || 0;
+  await updateDoc(doc(db,'stores',P.storeId), { deliveryFee: fee });
+  _toast('✅ Taxa de entrega salva!');
+}
+
+/* ── Pedidos (lojista) ───────────────────────────────────── */
+function _loadPanelOrders() {
+  if (!P.storeId) return;
+  const { db, collection, query, where, orderBy, onSnapshot } = _fb2;
+  if (UNSUB2.orders) UNSUB2.orders();
+  const q = query(
+    collection(db,'orders'),
+    where('storeId','==',P.storeId),
+    where('status','in',['aguardando','preparando','saiu']),
+    orderBy('createdAt','desc')
+  );
+  UNSUB2.orders = onSnapshot(q, snap => {
+    const orders = [];
+    snap.forEach(d => orders.push({ id:d.id, ...d.data() }));
+
+    // Sound on new aguardando order
+    if (snap.docChanges().some(c => c.type==='added' && c.doc.data().status==='aguardando')) {
+      try { const a=document.getElementById('cash-sound'); a.currentTime=0; a.play(); } catch(e){}
+    }
+    _renderPanelOrders(orders);
+  });
+}
+
+function _renderPanelOrders(orders) {
+  const list  = document.getElementById('lojista-orders-list');
+  const empty = document.getElementById('lojista-orders-empty');
+  if (!orders.length) {
+    list.innerHTML = ''; empty.classList.remove('hidden'); return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = orders.map(_lojistaOrderCard).join('');
+}
+
+function _lojistaOrderCard(o) {
+  const nextMap = { aguardando:{label:'▶ Iniciar Preparo',next:'preparando'}, preparando:{label:'🛵 Saiu para Entrega',next:'saiu'}, saiu:{label:'✅ Marcar Entregue',next:'entregue'} };
+  const st = nextMap[o.status];
+  const statusLabel = { aguardando:'⏳ Aguardando', preparando:'👨‍🍳 Preparando', saiu:'🛵 A caminho' }[o.status] || o.status;
+
+  return `
+  <div class="lojista-order-card">
+    <div class="lojista-order-head">
+      <span class="lojista-order-client">${_esc2(o.userName||'Cliente')}</span>
+      <span class="lojista-order-total">R$ ${(+o.total||0).toFixed(2)}</span>
+    </div>
+    <div class="lojista-order-items">${(o.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ')}</div>
+    ${o.address ? `<div class="lojista-order-addr">📍 ${_esc2(o.address)}</div>` : ''}
+    <div class="order-actions">
+      <div class="btn-status-label">${statusLabel}</div>
+      ${st ? `<button class="btn-advance" onclick="_advanceOrder('${o.id}','${st.next}')">${st.label}</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function _advanceOrder(id, status) {
+  const { db, doc, updateDoc } = _fb2;
+  await updateDoc(doc(db,'orders',id), { status });
+  _toast('✅ Pedido atualizado!');
+}
+
+/* ── Produtos (lojista) ──────────────────────────────────── */
+function _loadPanelProducts() {
+  if (!P.storeId) return;
+  const { db, collection, onSnapshot } = _fb2;
+  if (UNSUB2.prods) UNSUB2.prods();
+  UNSUB2.prods = onSnapshot(collection(db,'stores',P.storeId,'products'), snap => {
+    const prods = [];
+    snap.forEach(d => prods.push({ id:d.id, ...d.data() }));
+    _renderPanelProducts(prods);
+  });
+}
+
+function _renderPanelProducts(prods) {
+  const list  = document.getElementById('prod-manage-list');
+  const empty = document.getElementById('prod-manage-empty');
+  if (!prods.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML = prods.map(p => `
+    <div class="prod-manage-card">
+      <div class="prod-manage-emoji">${p.emoji||'🍽️'}</div>
+      <div class="prod-manage-info">
+        <div class="prod-manage-name">${_esc2(p.name)}</div>
+        <div class="prod-manage-price">R$ ${(+p.price||0).toFixed(2)} ${p.rating?`· ⭐${p.rating}`:''}</div>
+      </div>
+      <div class="prod-manage-actions">
+        <label class="mini-toggle">
+          <input type="checkbox" ${p.active!==false?'checked':''} onchange="_toggleProd('${p.id}',this.checked)"/>
+          <div class="mini-track"></div>
+          <div class="mini-thumb"></div>
+        </label>
+        <button class="btn-icon edit" onclick="openProdModal('${p.id}')"><i class="fa-solid fa-pen" style="font-size:11px"></i></button>
+        <button class="btn-icon delete" onclick="_deleteProd('${p.id}')"><i class="fa-solid fa-trash-can" style="font-size:11px"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openProdModal(editId) {
+  document.getElementById('prod-modal').classList.remove('hidden');
+  document.getElementById('pm-edit-id').value = editId||'';
+  document.getElementById('prod-modal-title').textContent = editId ? 'Editar Produto' : 'Novo Produto';
+  if (!editId) {
+    ['pm-name','pm-desc','pm-price','pm-rating','pm-emoji'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('pm-photo-label').textContent = 'Clique para enviar foto';
+    P.photoFile = null;
+  }
+}
+function closeProdModal(e) {
+  if (e && e.target!==document.getElementById('prod-modal')) return;
+  document.getElementById('prod-modal').classList.add('hidden');
+}
+function handlePhotoSelect(input) {
+  if (input.files[0]) {
+    P.photoFile = input.files[0];
+    document.getElementById('pm-photo-label').textContent = '✅ ' + input.files[0].name;
+  }
+}
+
+async function _saveProd() {
+  if (!P.storeId) return;
+  const { db, storage, doc, addDoc, updateDoc, collection, serverTimestamp, ref, uploadBytes, getDownloadURL } = _fb2;
+  const name     = document.getElementById('pm-name').value.trim();
+  const desc     = document.getElementById('pm-desc').value.trim();
+  const price    = parseFloat(document.getElementById('pm-price').value)||0;
+  const rating   = parseFloat(document.getElementById('pm-rating').value)||null;
+  const emoji    = document.getElementById('pm-emoji').value.trim();
+  const category = document.getElementById('pm-category').value;
+  const editId   = document.getElementById('pm-edit-id').value;
+  if (!name||!price) { _toast('⚠️ Nome e preço são obrigatórios', true); return; }
+
+  let photoURL = '';
+  if (P.photoFile) {
+    try {
+      const storRef = ref(storage,`products/${P.storeId}_${Date.now()}`);
+      const up = await uploadBytes(storRef, P.photoFile);
+      photoURL = await getDownloadURL(up.ref);
+    } catch(e) { _toast('Erro ao enviar foto: '+e.message, true); return; }
+  }
+
+  const data = { name, description:desc, price, rating, emoji, category, active:true };
+  if (photoURL) data.photoURL = photoURL;
+
+  try {
+    if (editId) {
+      await updateDoc(doc(db,'stores',P.storeId,'products',editId), data);
+      _toast('✅ Produto atualizado!');
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db,'stores',P.storeId,'products'), data);
+      _toast('✅ Produto adicionado!');
+    }
+    closeProdModal();
+  } catch(e) { _toast('Erro: '+e.message, true); }
+}
+
+async function _toggleProd(prodId, active) {
+  const { db, doc, updateDoc } = _fb2;
+  await updateDoc(doc(db,'stores',P.storeId,'products',prodId), { active });
+  _toast(active ? '✅ Produto ativado' : '⏸ Produto pausado');
+}
+
+async function _deleteProd(prodId) {
+  if (!confirm('Remover este produto?')) return;
+  const { db, doc, deleteDoc } = _fb2;
+  await deleteDoc(doc(db,'stores',P.storeId,'products',prodId));
+  _toast('🗑 Produto removido');
+}
+
+/* ── Financeiro ──────────────────────────────────────────── */
+function _loadFinanceiro() {
+  if (!P.storeId) return;
+  const { db, collection, query, where, orderBy, onSnapshot } = _fb2;
+  const q = query(
+    collection(db,'orders'),
+    where('storeId','==',P.storeId),
+    where('status','==','entregue'),
+    orderBy('createdAt','desc')
+  );
+  onSnapshot(q, snap => {
+    const orders = [];
+    snap.forEach(d => orders.push({ id:d.id, ...d.data() }));
+    _renderFinanceiro(orders);
+  });
+}
+
+function _renderFinanceiro(orders) {
+  const rows = document.getElementById('fin-rows');
+  if (!orders.length) { rows.innerHTML='<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">Nenhuma venda ainda</p>'; return; }
+
+  const bruto = orders.reduce((a,o)=>a+(+o.total||0),0);
+  const comis = bruto * 0.05;
+  const liqu  = bruto - comis;
+
+  rows.innerHTML = orders.slice(0,20).map(o => {
+    const date = o.createdAt?.toDate?o.createdAt.toDate().toLocaleDateString('pt-BR'):'–';
+    const liq  = (+o.total||0)*0.95;
+    return `
+    <div class="fin-order-row">
+      <div class="fin-label">
+        <div style="font-weight:700;color:var(--text-primary)">${_esc2(o.userName||'Cliente')}</div>
+        <div style="font-size:10px">${date}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="fin-value" style="color:var(--green)">+ R$ ${(+o.total||0).toFixed(2)}</div>
+        <div style="font-size:10px;color:var(--text-muted)">Liq: R$ ${liq.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('fin-bruto').textContent    = `R$ ${bruto.toFixed(2)}`;
+  document.getElementById('fin-comissao').textContent = `− R$ ${comis.toFixed(2)}`;
+  document.getElementById('fin-liquido').textContent  = `R$ ${liqu.toFixed(2)}`;
+}
+
+/* ── Config ──────────────────────────────────────────────── */
+async function _saveConfig() {
+  if (!P.storeId) return;
+  const { db, doc, updateDoc } = _fb2;
+  const prep = parseInt(document.getElementById('cfg-prep').value)||30;
+  const data = {
+    name:        document.getElementById('cfg-name').value.trim(),
+    moment:      document.getElementById('cfg-moment').value,
+    prepTime:    prep,
+    emoji:       document.getElementById('cfg-emoji').value.trim(),
+    whatsapp:    document.getElementById('cfg-whatsapp').value.trim(),
+    hours:       document.getElementById('cfg-hours').value.trim(),
+    description: document.getElementById('cfg-desc').value.trim(),
+    deliveryTime:`${prep}–${prep+15}`,
+  };
+  await updateDoc(doc(db,'stores',P.storeId), data);
+  document.getElementById('panel-store-name').textContent = data.name || 'Minha Loja';
+  _toast('✅ Configurações salvas!');
+}
+
+/* ── Admin: solicitações ─────────────────────────────────── */
+function _loadAdminRequests() {
+  const { db, collection, query, where, onSnapshot } = _fb2;
+  const q = query(collection(db,'stores'), where('active','==',false));
+  onSnapshot(q, snap => {
+    const list  = document.getElementById('admin-requests');
+    const empty = document.getElementById('admin-empty');
+    const items = [];
+    snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+    if (!items.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    list.innerHTML = items.map(s => `
+      <div class="admin-card">
+        <div class="admin-store-name">${_esc2(s.name)}</div>
+        <div class="admin-store-info">
+          👤 ${_esc2(s.owner||'')} · 📄 ${_esc2(s.document||'')} · 📱 ${_esc2(s.whatsapp||'')}
+        </div>
+        <div class="admin-store-info">📍 ${_esc2(s.address||'')}</div>
+        ${s.logoURL ? `<img src="${s.logoURL}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:8px"/>` : ''}
+        <div style="display:flex;gap:8px">
+          <button class="btn-approve" onclick="_approveStore('${s.id}')">✅ Aprovar</button>
+          <button class="btn-reject"  onclick="_rejectStore('${s.id}')">❌ Recusar</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+async function _approveStore(id) {
+  const { db, doc, updateDoc } = _fb2;
+  await updateDoc(doc(db,'stores',id), { active: true });
+  _toast('✅ Loja aprovada!');
+}
+async function _rejectStore(id) {
+  if (!confirm('Recusar e remover esta solicitação?')) return;
+  const { db, doc, deleteDoc } = _fb2;
+  await deleteDoc(doc(db,'stores',id));
+  _toast('❌ Solicitação recusada.');
+}
+
+/* ── Admin: banners ──────────────────────────────────────── */
+function _loadAdminBanners() {
+  const { db, collection, query, orderBy, onSnapshot } = _fb2;
+  onSnapshot(query(collection(db,'banners'), orderBy('order','asc')), snap => {
+    const list = document.getElementById('admin-banners');
+    const items = [];
+    snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+    list.innerHTML = items.map(b => `
+      <div class="admin-card" style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">${b.emoji||'🛵'}</span>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px">${_esc2(b.title||'')}</div><div style="font-size:11px;color:var(--text-muted)">Ordem: ${b.order||0}</div></div>
+        <button class="btn-icon delete" onclick="_deleteBanner('${b.id}')"><i class="fa-solid fa-trash-can" style="font-size:11px"></i></button>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px">Nenhum banner</p>';
+  });
+}
+
+function openBannerModal() { document.getElementById('banner-modal').classList.remove('hidden'); }
+function closeBannerModal(e) {
+  if (e && e.target!==document.getElementById('banner-modal')) return;
+  document.getElementById('banner-modal').classList.add('hidden');
+}
+
+async function _saveBanner() {
+  const { db, collection, addDoc, serverTimestamp } = _fb2;
+  const title = document.getElementById('bm-title').value.trim();
+  if (!title) { _toast('⚠️ Título obrigatório', true); return; }
+  await addDoc(collection(db,'banners'), {
+    title, tag:   document.getElementById('bm-tag').value.trim(),
+    cta:          document.getElementById('bm-cta').value.trim(),
+    emoji:        document.getElementById('bm-emoji').value.trim()||'🛵',
+    bgColor:      document.getElementById('bm-color').value.trim(),
+    order:        parseInt(document.getElementById('bm-order').value)||0,
+    createdAt:    serverTimestamp(),
+  });
+  _toast('✅ Banner publicado!');
+  closeBannerModal();
+}
+
+async function _deleteBanner(id) {
+  if (!confirm('Remover banner?')) return;
+  const { db, doc, deleteDoc } = _fb2;
+  await deleteDoc(doc(db,'banners',id));
+  _toast('🗑 Banner removido');
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+let _tt;
+function _toast(msg, err=false, dur=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast${err?' error':''}`;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.className='toast hidden', dur);
+}
+function _esc2(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
