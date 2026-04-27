@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', () => {
 const { 
   auth, db, storage, gProv, 
   onAuthStateChanged, signInWithPopup, signOut, 
@@ -985,3 +986,4 @@ window.filterCategory = filterCategory;
 window.openCart = openCart;
 window.handleSearch = handleSearch;
 window.clearSearch = clearSearch;
+});
