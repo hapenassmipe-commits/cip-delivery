@@ -1,3 +1,10 @@
+const { 
+  auth, db, storage, gProv, 
+  onAuthStateChanged, signInWithPopup, signOut, 
+  collection, doc, onSnapshot, addDoc, updateDoc, 
+  deleteDoc, getDoc, getDocs, query, orderBy, 
+  where, serverTimestamp, ref, uploadBytes, getDownloadURL 
+} = window._fb;
 // ═══════════════════════════════════════════════════════════
 //  CIPÓ DELIVERY — app.js
 //  Versão SaaS · Firebase · Mercado Pago Pix · Anti-Golpe
@@ -87,17 +94,22 @@ function _updateAuthUI(user) {
 }
 
 function handleAuthBtn() {
-  if (S.user) doLogout(); else openLoginModal();
+  const user = auth.currentUser;
+  if (user) {
+    signOut(auth); 
+  } else {
+    doLogin(); 
+  }
 }
 
 async function doLogin() {
   try {
-    const { auth, signInWithPopup, gProv } = _fb;
     await signInWithPopup(auth, gProv);
-    closeLoginModal();
-    toast('✅ Login realizado!');
-    if (S.pendingAfterLogin) { const fn = S.pendingAfterLogin; S.pendingAfterLogin = null; fn(); }
-  } catch(e) { toast('Erro: ' + e.message, true); }
+    console.log("Login realizado com sucesso!");
+  } catch (error) {
+    console.error("Erro no login:", error);
+    if (typeof showToast === "function") showToast("Erro ao entrar com Google");
+  }
 }
 
 async function doLogout() {
@@ -966,3 +978,10 @@ function _grad(emoji) {
     '🍽️':'#555,#888','🌙':'#1a1a2e,#16213e','🥘':'#8B4513,#D2691E' };
   return m[emoji] || '#667eea,#764ba2';
 }
+window.handleAuthBtn = handleAuthBtn;
+window.doLogin = doLogin;
+window.navigate = navigate;
+window.filterCategory = filterCategory;
+window.openCart = openCart;
+window.handleSearch = handleSearch;
+window.clearSearch = clearSearch;
