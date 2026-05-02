@@ -11,17 +11,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-
-<!--
-  ════════════════════════════════════════════════════════
-   FIREBASE — SDK via CDN (compatibilidade global)
-   ✅ Sem type="module" → sem problema de escopo
-  ════════════════════════════════════════════════════════
--->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<!-- Supabase SDK (gratuito, sem cartão) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -69,8 +60,8 @@
         </button>
       </div>
 
-      <!-- Banners -->
-      <div class="banner-carousel" id="banner-track">
+      <!-- Banners rotativos -->
+      <div id="banner-track" class="banner-carousel">
         <div class="banner banner-default">
           <div class="banner-text">
             <span class="banner-tag">🔥 Oferta do dia</span>
@@ -196,7 +187,6 @@
     </header>
 
     <div class="scroll-content">
-      <!-- Botão Modo Lojista -->
       <div class="lojista-entry" onclick="handleLojistaMode()">
         <div class="lojista-entry-icon">🏪</div>
         <div class="lojista-entry-text">
@@ -271,7 +261,7 @@
           </select>
         </div>
         <div class="form-group two-col">
-          <div><label>Taxa de Entrega (R$)</label><input id="p-fee" type="number" step="0.5" min="0" placeholder="0 = Grátis"/></div>
+          <div><label>Taxa Entrega (R$)</label><input id="p-fee" type="number" step="0.5" min="0" placeholder="0 = Grátis"/></div>
           <div><label>Tempo Preparo (min)</label><input id="p-prep" type="number" min="5" max="120" placeholder="30"/></div>
         </div>
         <div class="form-group"><label>Emoji da Loja</label><input id="p-emoji" type="text" maxlength="4" placeholder="🍕"/></div>
@@ -304,34 +294,23 @@
       <div class="privacy-doc">
         <p class="privacy-date">Última atualização: Janeiro de 2025</p>
         <h3>1. Quem Somos</h3>
-        <p>O <strong>Cipó Delivery</strong> é uma plataforma digital de intermediação de pedidos de delivery operada em Cipó, Bahia. Modelo de negócio: comissão de 5% por venda. Sem cobranças mensais.</p>
+        <p>O <strong>Cipó Delivery</strong> é uma plataforma digital de intermediação de pedidos em Cipó, Bahia. Cobramos apenas 5% de comissão por venda. Sem mensalidade.</p>
         <h3>2. Dados Coletados</h3>
         <ul>
-          <li><strong>Cadastro:</strong> nome, e-mail e foto (via Google Sign-In).</li>
-          <li><strong>Pedidos:</strong> itens, valor, endereço e horário.</li>
-          <li><strong>Pagamentos:</strong> processados pelo Mercado Pago (PCI-DSS). Não armazenamos dados de cartão.</li>
+          <li><strong>Cadastro:</strong> nome e e-mail (via Google OAuth).</li>
+          <li><strong>Pedidos:</strong> itens, valor e endereço de entrega.</li>
+          <li><strong>Pagamentos:</strong> processados pelo Mercado Pago. Não armazenamos dados de cartão.</li>
           <li><strong>Lojistas:</strong> CPF/CNPJ, WhatsApp e endereço comercial.</li>
         </ul>
-        <h3>3. Finalidade</h3>
-        <ul>
-          <li>Processar e gerenciar pedidos.</li>
-          <li>Confirmar pagamentos Pix automaticamente (anti-golpe).</li>
-          <li>Comunicar status do pedido em tempo real.</li>
-          <li>Prevenir fraudes e garantir segurança.</li>
-        </ul>
-        <h3>4. Base Legal (LGPD — Lei 13.709/2020)</h3>
-        <p>Tratamos dados com base no Art. 7º da LGPD: execução de contrato, legítimo interesse (segurança/antifraude) e cumprimento de obrigação legal.</p>
-        <h3>5. Segurança das Transações</h3>
-        <p>Todos os pagamentos são processados pelo <strong>Mercado Pago</strong> (PCI-DSS nível 1). Pagamentos Pix são confirmados via webhook automático — o pedido só é criado após confirmação bancária, eliminando golpes com comprovantes falsos. A plataforma usa Firebase com criptografia AES-256.</p>
-        <h3>6. Compartilhamento</h3>
-        <p>Dados compartilhados apenas com: o lojista do pedido (nome e itens), Mercado Pago (pagamento) e Google Firebase (auth/armazenamento). <strong>Não vendemos dados.</strong></p>
-        <h3>7. Seus Direitos (LGPD)</h3>
-        <p>Você pode acessar, corrigir, portar ou solicitar exclusão dos seus dados pelo suporte.</p>
-        <h3>8. Contato</h3>
-        <p>E-mail: <strong>privacidade@cipodelivery.com.br</strong><br/>WhatsApp: Perfil → Ajuda / Suporte.</p>
+        <h3>3. Segurança</h3>
+        <p>Dados armazenados no Supabase com criptografia em trânsito (TLS) e em repouso (AES-256). Pagamentos Pix confirmados via webhook automático — pedido só criado após aprovação bancária.</p>
+        <h3>4. Base Legal (LGPD)</h3>
+        <p>Tratamento baseado no Art. 7º da Lei 13.709/2020: execução de contrato e legítimo interesse.</p>
+        <h3>5. Seus Direitos</h3>
+        <p>Acesso, correção ou exclusão dos dados via suporte: <strong>privacidade@cipodelivery.com.br</strong></p>
         <div class="privacy-footer">
           <p>Cipó Delivery © 2025 · Todos os direitos reservados</p>
-          <p>Em conformidade com a Lei 13.709/2020 – LGPD</p>
+          <p>Conforme Lei 13.709/2020 – LGPD</p>
         </div>
       </div>
     </div>
@@ -398,7 +377,7 @@
     <div class="modal-handle"></div>
     <div class="modal-header"><h3>Entrar para continuar</h3></div>
     <p style="font-size:13px;color:var(--text-secondary);margin:0 0 20px">
-      Faça login para finalizar seu pedido com segurança.
+      Faça login com sua conta Google para continuar.
     </p>
     <button onclick="doLogin()" class="btn-google">
       <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="G"/>
@@ -408,13 +387,13 @@
   </div>
 </div>
 
-<!-- Endereço (checkout) -->
+<!-- Endereço -->
 <div id="address-modal" class="modal-overlay hidden" onclick="closeAddressModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header"><h3>📍 Endereço de Entrega</h3></div>
     <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">
-      Confirme ou informe onde deseja receber seu pedido.
+      Confirme ou informe onde quer receber seu pedido.
     </p>
     <input id="checkout-address" type="text"
       placeholder="Rua, número, bairro — Cipó, BA"
@@ -459,67 +438,56 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast" class="toast hidden"></div>
-<!-- Áudio -->
 <audio id="cash-sound" preload="auto">
   <source src="https://www.soundjay.com/misc/sounds/cash-register-1.mp3" type="audio/mpeg"/>
 </audio>
 
-<!-- ════════════════════════════════════════════════════════
-  JAVASCRIPT — tudo inline, sem módulos externos
-  ════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════
+  JAVASCRIPT — Supabase (100% gratuito, sem cartão)
+════════════════════════════════════════════════════ -->
 <script>
-// ══════════════════════════════════════════════════════
-//  ⚙️  CONFIGURE SEUS DADOS DO FIREBASE AQUI
-// ══════════════════════════════════════════════════════
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyDx2p8PzLOzuHi1MOdQNpqMQEXCneLpfRk",
-  authDomain:        "cipodelivery.firebaseapp.com",
-  projectId:         "cipodelivery",
-  storageBucket:     "cipodelivery.firebasestorage.app",
-  messagingSenderId: "577022167470",
-  appId:             "1:577022167470:web:871d3490a74779e96b603f"
-};
-// ══════════════════════════════════════════════════════
+// ╔══════════════════════════════════════════════════╗
+// ║  ⚙️  COLE SUAS CREDENCIAIS DO SUPABASE AQUI     ║
+// ║  (você vai pegar estas após criar o projeto)    ║
+// ╚══════════════════════════════════════════════════╝
+const SUPABASE_URL  = 'https://gmeywdpfpiiswcrgkzsy.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZXl3ZHBmcGlpc3djcmdrenN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODkwNjksImV4cCI6MjA5MzE2NTA2OX0.xPeabrQnvhc0mtv4AtT5BhCt21s2N7hXKr7TfuGMUKw';
+// ════════════════════════════════════════════════════
 
-// ── Inicializa Firebase (SDK compat, escopo global) ──
-firebase.initializeApp(FIREBASE_CONFIG);
-const AUTH    = firebase.auth();
-const DB      = firebase.firestore();
-const STORAGE = firebase.storage();
+// Inicializa Supabase
+const SB = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── Estado Global ────────────────────────────────────
-const S = {
-  user:             null,
-  currentScreen:    'home',
-  currentMoment:    'todos',
-  currentStoreId:   null,
-  lojistaStoreId:   null,
-  orderFilter:      'aguardando',
-  mapInit:          false,
-  bannerTimer:      null,
-  bannerIndex:      0,
-  bannerTotal:      1,
-  pendingAfterLogin:null,
-  checkoutAddress:  '',
-  pixPolling:       null,
+var S = {
+  user:              null,
+  currentScreen:     'home',
+  currentMoment:     'todos',
+  currentStoreId:    null,
+  lojistaStoreId:    null,
+  orderFilter:       'aguardando',
+  mapInit:           false,
+  bannerTimer:       null,
+  bannerIndex:       0,
+  bannerTotal:       1,
+  pendingAfterLogin: null,
+  checkoutAddress:   '',
+  pixPolling:        null,
+  orderChannel:      null,  // canal realtime Supabase
   cart: {
-    storeId:    null,
-    storeName:  '',
-    deliveryFee:0,
-    items:      [],
+    storeId:     null,
+    storeName:   '',
+    deliveryFee: 0,
+    items:       [],
   },
 };
+var _logoFile = null;
 
-// Listeners em tempo real
-const UNSUB = {};
-// Arquivo de logo pendente
-let _logoFile = null;
-
-// ── Boot ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
 window.addEventListener('load', function() {
-  // Aguarda splash
+  // Splash
   setTimeout(function() {
     var splash = document.getElementById('splash');
     splash.style.opacity = '0';
@@ -532,18 +500,28 @@ window.addEventListener('load', function() {
     }, 500);
   }, 1800);
 
-  // Auth state listener
-  AUTH.onAuthStateChanged(function(user) {
-    S.user = user;
-    _updateAuthUI(user);
-    if (S.currentScreen === 'orders') _loadOrders();
+  // Auth listener (Supabase)
+  SB.auth.onAuthStateChange(function(event, session) {
+    S.user = session ? session.user : null;
+    _updateAuthUI(S.user);
+    if (S.currentScreen === 'orders')  _loadOrders();
     if (S.currentScreen === 'profile') _checkLojistaLink();
+    // Realtime pedidos do lojista
+    if (S.user) _subscribeLojistaOrders();
+  });
+
+  // Verifica sessão atual
+  SB.auth.getSession().then(function(r) {
+    if (r.data && r.data.session) {
+      S.user = r.data.session.user;
+      _updateAuthUI(S.user);
+    }
   });
 });
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  AUTH
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function _updateAuthUI(user) {
   var avatar = document.getElementById('profile-avatar');
   var name   = document.getElementById('profile-name');
@@ -551,13 +529,14 @@ function _updateAuthUI(user) {
   var btn    = document.getElementById('btn-auth');
 
   if (user) {
-    var firstName = (user.displayName || 'usuário').split(' ')[0];
-    name.textContent  = 'Olá, ' + firstName + '!';
+    var meta = user.user_metadata || {};
+    var first = (meta.full_name || meta.name || user.email || 'usuário').split(' ')[0];
+    name.textContent  = 'Olá, ' + first + '!';
     email.textContent = user.email || '';
     btn.textContent   = 'Sair';
     btn.onclick       = doLogout;
-    if (user.photoURL) {
-      avatar.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>';
+    if (meta.avatar_url) {
+      avatar.innerHTML = '<img src="' + meta.avatar_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>';
     } else {
       avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
     }
@@ -575,22 +554,24 @@ function handleAuthBtn() {
 }
 
 function doLogin() {
-  var provider = new firebase.auth.GoogleAuthProvider();
-  AUTH.signInWithPopup(provider)
-    .then(function() {
+  // OAuth com Google via Supabase
+  SB.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.href,
+    }
+  }).then(function(r) {
+    if (r.error) showToast('Erro: ' + r.error.message, true);
+    else {
       closeLoginModal();
-      showToast('✅ Login realizado!');
-      if (S.pendingAfterLogin) {
-        var fn = S.pendingAfterLogin;
-        S.pendingAfterLogin = null;
-        fn();
-      }
-    })
-    .catch(function(e) { showToast('Erro no login: ' + e.message, true); });
+      // O redirect acontece automaticamente
+      // onAuthStateChange cuida do estado após voltar
+    }
+  });
 }
 
 function doLogout() {
-  AUTH.signOut().then(function() {
+  SB.auth.signOut().then(function() {
     S.user = null;
     showToast('Até logo! 👋');
   });
@@ -604,23 +585,20 @@ function closeLoginModal(e) {
   document.getElementById('login-modal').classList.add('hidden');
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  NAVEGAÇÃO
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function navigate(screenId) {
-  // Esconde todas
   document.querySelectorAll('.screen').forEach(function(s) {
     s.classList.remove('active');
     if (!s.classList.contains('hidden')) s.classList.add('hidden');
   });
-
   var el = document.getElementById('screen-' + screenId);
   if (!el) return;
   el.classList.remove('hidden');
   el.classList.add('active');
   S.currentScreen = screenId;
 
-  // Nav bar
   ['home','orders','profile'].forEach(function(id) {
     var btn = document.getElementById('nav-' + id);
     if (btn) btn.classList.toggle('active', id === screenId);
@@ -630,17 +608,17 @@ function navigate(screenId) {
   if (screenId === 'profile') _checkLojistaLink();
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  BANNERS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function _loadBanners() {
-  DB.collection('banners').orderBy('order','asc')
-    .onSnapshot(function(snap) {
-      if (snap.empty) return; // mantém banner padrão
-      var banners = [];
-      snap.forEach(function(d) { banners.push(Object.assign({ id:d.id }, d.data())); });
-      _renderBanners(banners);
-    }, function() {}); // falha silenciosa — banner padrão permanece
+  SB.from('banners')
+    .select('*')
+    .order('ordem', { ascending: true })
+    .then(function(r) {
+      if (r.error || !r.data || !r.data.length) return;
+      _renderBanners(r.data);
+    });
 }
 
 function _renderBanners(banners) {
@@ -650,18 +628,18 @@ function _renderBanners(banners) {
   S.bannerTotal = banners.length;
 
   track.innerHTML = banners.map(function(b) {
-    return '<div class="banner" style="' + (b.bgColor ? 'background:'+b.bgColor : '') + '">'
+    return '<div class="banner" style="' + (b.bg_color ? 'background:'+b.bg_color : '') + '">'
       + '<div class="banner-text">'
       + (b.tag   ? '<span class="banner-tag">' + _esc(b.tag) + '</span>' : '')
-      + '<h3>' + _esc(b.title||'') + '</h3>'
+      + '<h3>' + _esc(b.titulo || '') + '</h3>'
       + (b.cta   ? '<span class="banner-cta">' + _esc(b.cta) + '</span>' : '')
       + '</div>'
-      + '<div class="banner-img">' + (b.emoji||'🛵') + '</div>'
+      + '<div class="banner-img">' + (b.emoji || '🛵') + '</div>'
       + '</div>';
   }).join('');
 
-  dots.innerHTML = banners.map(function(_,i) {
-    return '<span class="' + (i===0?'active':'') + '"></span>';
+  dots.innerHTML = banners.map(function(_, i) {
+    return '<span class="' + (i === 0 ? 'active' : '') + '"></span>';
   }).join('');
 
   clearInterval(S.bannerTimer);
@@ -669,54 +647,50 @@ function _renderBanners(banners) {
     S.bannerIndex = 0;
     S.bannerTimer = setInterval(function() {
       S.bannerIndex = (S.bannerIndex + 1) % S.bannerTotal;
-      document.querySelectorAll('#banner-dots span').forEach(function(d,i) {
+      document.querySelectorAll('#banner-dots span').forEach(function(d, i) {
         d.classList.toggle('active', i === S.bannerIndex);
       });
     }, 4000);
   }
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  LOJAS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function _loadStores() {
-  if (UNSUB.stores) UNSUB.stores();
+  var query = SB.from('stores')
+    .select('*')
+    .eq('ativo', true)
+    .order('avaliacao', { ascending: false });
 
-  UNSUB.stores = DB.collection('stores')
-    .where('active','==',true)
-    .orderBy('rating','desc')
-    .onSnapshot(function(snap) {
-      var stores = [];
-      snap.forEach(function(d) { stores.push(Object.assign({ id:d.id }, d.data())); });
-      _renderStores(stores);
-    }, function() {
-      // Firebase não configurado ou índice ausente → demo
-      _renderStoresFallback();
-    });
+  if (S.currentMoment !== 'todos') {
+    query = query.eq('momento', S.currentMoment);
+  }
+
+  query.then(function(r) {
+    if (r.error) { _renderStoresFallback(); return; }
+    _renderStores(r.data || []);
+  });
 }
 
 function _renderStoresFallback() {
   var DEMO = [
-    { id:'d1', name:'Pizzaria do Zé',  emoji:'🍕', rating:4.8, deliveryTime:'30–45', deliveryFee:0,   isOpen:true,  moment:'almoco',  category:'Pizza • Italiana'       },
-    { id:'d2', name:'Burguer Cipó',    emoji:'🍔', rating:4.6, deliveryTime:'20–35', deliveryFee:3.5, isOpen:true,  moment:'lanches', category:'Lanches • Hambúrguer'   },
-    { id:'d3', name:'Açaí da Serra',   emoji:'🫐', rating:4.9, deliveryTime:'15–25', deliveryFee:0,   isOpen:true,  moment:'madruga', category:'Açaí • Sorvetes'        },
-    { id:'d4', name:'Brasa & Brasa',   emoji:'🥩', rating:4.7, deliveryTime:'40–55', deliveryFee:5,   isOpen:false, moment:'jantar',  category:'Churrasco • Marmita'    },
-    { id:'d5', name:'Depósito do Frio',emoji:'🥤', rating:4.5, deliveryTime:'10–20', deliveryFee:2,   isOpen:true,  moment:'bebidas', category:'Bebidas • Conveniência' },
-    { id:'d6', name:'Tapioca da Mana', emoji:'🌮', rating:4.4, deliveryTime:'20–30', deliveryFee:3,   isOpen:true,  moment:'almoco',  category:'Tapioca • Salgados'     },
+    { id:'d1', nome:'Pizzaria do Zé',  emoji:'🍕', avaliacao:4.8, tempo_entrega:'30–45', taxa_entrega:0,   aberta:true,  momento:'almoco',  categoria:'Pizza • Italiana'       },
+    { id:'d2', nome:'Burguer Cipó',    emoji:'🍔', avaliacao:4.6, tempo_entrega:'20–35', taxa_entrega:3.5, aberta:true,  momento:'lanches', categoria:'Lanches • Hambúrguer'   },
+    { id:'d3', nome:'Açaí da Serra',   emoji:'🫐', avaliacao:4.9, tempo_entrega:'15–25', taxa_entrega:0,   aberta:true,  momento:'madruga', categoria:'Açaí • Sorvetes'        },
+    { id:'d4', nome:'Brasa & Brasa',   emoji:'🥩', avaliacao:4.7, tempo_entrega:'40–55', taxa_entrega:5,   aberta:false, momento:'jantar',  categoria:'Churrasco • Marmita'    },
+    { id:'d5', nome:'Depósito do Frio',emoji:'🥤', avaliacao:4.5, tempo_entrega:'10–20', taxa_entrega:2,   aberta:true,  momento:'bebidas', categoria:'Bebidas • Conveniência' },
+    { id:'d6', nome:'Tapioca da Mana', emoji:'🌮', avaliacao:4.4, tempo_entrega:'20–30', taxa_entrega:3,   aberta:true,  momento:'almoco',  categoria:'Tapioca • Salgados'     },
   ];
   _renderStores(DEMO);
-  showToast('⚙️ Configure o Firebase para dados reais', false, 5000);
+  showToast('⚙️ Configure o Supabase para dados reais', false, 5000);
 }
 
-function _renderStores(allStores) {
+function _renderStores(stores) {
   var skel  = document.getElementById('stores-skeleton');
   var list  = document.getElementById('stores-list');
   var empty = document.getElementById('stores-empty');
   var count = document.getElementById('store-count');
-
-  var stores = S.currentMoment === 'todos'
-    ? allStores
-    : allStores.filter(function(s) { return s.moment === S.currentMoment; });
 
   skel.classList.add('hidden');
 
@@ -733,10 +707,10 @@ function _renderStores(allStores) {
 }
 
 function _storeCardHTML(s) {
-  var fee = +s.deliveryFee === 0
+  var fee = +(s.taxa_entrega||0) === 0
     ? '<span class="delivery-fee free">Taxa: Grátis</span>'
-    : '<span class="delivery-fee">Taxa: R$ ' + (+s.deliveryFee).toFixed(2) + '</span>';
-  var closed = !s.isOpen ? '<span class="card-badge fechada">Fechado</span>' : '';
+    : '<span class="delivery-fee">Taxa: R$ ' + (+s.taxa_entrega).toFixed(2) + '</span>';
+  var closed = !s.aberta ? '<span class="card-badge fechada">Fechado</span>' : '';
   var grad   = _grad(s.emoji);
 
   return '<div class="restaurant-card" onclick="openStore(\'' + s.id + '\')">'
@@ -744,38 +718,37 @@ function _storeCardHTML(s) {
     +   '<div class="card-img-bg" style="background:linear-gradient(135deg,' + grad + ')"></div>'
     +   '<div class="card-img-overlay"></div>'
     +   closed
-    +   '<div class="card-emoji-wrap">' + (s.emoji||'🍽️') + '</div>'
+    +   '<div class="card-emoji-wrap">' + (s.emoji || '🍽️') + '</div>'
     + '</div>'
     + '<div class="card-body">'
     +   '<div class="card-title-row">'
-    +     '<h3>' + _esc(s.name) + '</h3>'
-    +     '<span class="card-rating"><i class="fa-solid fa-star"></i>' + (+s.rating||0).toFixed(1) + '</span>'
+    +     '<h3>' + _esc(s.nome) + '</h3>'
+    +     '<span class="card-rating"><i class="fa-solid fa-star"></i>' + (+s.avaliacao||0).toFixed(1) + '</span>'
     +   '</div>'
-    +   '<p class="card-subtitle">' + _esc(s.category||'') + '</p>'
+    +   '<p class="card-subtitle">' + _esc(s.categoria || '') + '</p>'
     +   '<div class="card-meta">'
-    +     '<span><i class="fa-regular fa-clock"></i> ' + (s.deliveryTime||'?') + 'min</span>'
+    +     '<span><i class="fa-regular fa-clock"></i> ' + (s.tempo_entrega || '?') + 'min</span>'
     +     fee
     +   '</div>'
     + '</div>'
     + '</div>';
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  FILTROS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function filterCategory(btn, moment) {
   document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   S.currentMoment = moment;
   _loadStores();
 }
-
 function handleSearch(val) {
   document.getElementById('search-clear').classList.toggle('hidden', !val.trim());
   document.querySelectorAll('#stores-list .restaurant-card').forEach(function(el) {
-    var text = (el.querySelector('h3')||{}).textContent || '';
-    var cat  = (el.querySelector('.card-subtitle')||{}).textContent || '';
-    el.style.display = (text + cat).toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+    var text = ((el.querySelector('h3') || {}).textContent || '') +
+               ((el.querySelector('.card-subtitle') || {}).textContent || '');
+    el.style.display = text.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
   });
 }
 function clearSearch() {
@@ -784,100 +757,84 @@ function clearSearch() {
   document.querySelectorAll('#stores-list .restaurant-card').forEach(function(el) { el.style.display = ''; });
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  DETALHE DA LOJA
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function openStore(storeId) {
   S.currentStoreId = storeId;
-  // Limpa tela
   document.getElementById('products-skeleton').classList.remove('hidden');
   document.getElementById('products-list').classList.add('hidden');
   document.getElementById('products-empty').classList.add('hidden');
   document.getElementById('store-closed-banner').classList.add('hidden');
   navigate('store');
 
-  DB.collection('stores').doc(storeId).get()
-    .then(function(snap) {
-      if (!snap.exists) { showToast('Loja não encontrada', true); return; }
-      var store = Object.assign({ id: snap.id }, snap.data());
+  SB.from('stores').select('*').eq('id', storeId).single()
+    .then(function(r) {
+      if (r.error || !r.data) { showToast('Loja não encontrada', true); return; }
+      var store = r.data;
       _renderStoreHero(store);
-      if (!store.isOpen) document.getElementById('store-closed-banner').classList.remove('hidden');
-
-      // Produtos
-      if (UNSUB.products) UNSUB.products();
-      UNSUB.products = DB.collection('stores').doc(storeId)
-        .collection('products')
-        .where('active','==',true)
-        .orderBy('rating','desc')
-        .onSnapshot(function(psnap) {
-          var prods = [];
-          psnap.forEach(function(d) { prods.push(Object.assign({ id:d.id }, d.data())); });
-          _renderProducts(prods, store);
-        });
-    })
-    .catch(function() {
-      // Demo
-      _renderStoreHeroFallback();
-      _renderProductsFallback();
+      if (!store.aberta) document.getElementById('store-closed-banner').classList.remove('hidden');
+      _loadProducts(storeId, store);
     });
 }
 
 function _renderStoreHero(s) {
   document.getElementById('store-hero-bg').style.background = 'linear-gradient(135deg,' + _grad(s.emoji) + ')';
-  document.getElementById('store-hero-emoji').textContent = s.emoji || '🍽️';
-  document.getElementById('store-hero-name').textContent  = s.name || '';
+  document.getElementById('store-hero-emoji').textContent   = s.emoji || '🍽️';
+  document.getElementById('store-hero-name').textContent    = s.nome || '';
   document.getElementById('store-hero-meta').innerHTML =
-    '<span>⭐ ' + (+s.rating||0).toFixed(1) + '</span><span>·</span>'
-    + '<span><i class="fa-regular fa-clock"></i> ' + (s.deliveryTime||'?') + 'min</span>';
+    '<span>⭐ ' + (+s.avaliacao||0).toFixed(1) + '</span><span>·</span>'
+    + '<span><i class="fa-regular fa-clock"></i> ' + (s.tempo_entrega||'?') + 'min</span>';
 
-  var fee = +s.deliveryFee === 0
+  var fee = +(s.taxa_entrega||0) === 0
     ? '<span style="color:var(--green);font-weight:700">Taxa: Grátis</span>'
-    : '<span>Taxa: <strong>R$ ' + (+s.deliveryFee).toFixed(2) + '</strong></span>';
+    : '<span>Taxa: <strong>R$ ' + (+s.taxa_entrega).toFixed(2) + '</strong></span>';
   document.getElementById('store-info-strip').innerHTML = fee
-    + (s.category ? '<span>·</span><span>' + _esc(s.category) + '</span>' : '')
-    + (s.hours    ? '<span><i class="fa-regular fa-clock"></i> ' + _esc(s.hours) + '</span>' : '')
-    + (s.whatsapp ? '<span><a href="https://wa.me/55' + s.whatsapp.replace(/\D/g,'')
+    + (s.categoria ? '<span>·</span><span>' + _esc(s.categoria) + '</span>' : '')
+    + (s.horario   ? '<span><i class="fa-regular fa-clock"></i> ' + _esc(s.horario) + '</span>' : '')
+    + (s.whatsapp  ? '<span><a href="https://wa.me/55' + s.whatsapp.replace(/\D/g,'')
         + '" target="_blank" style="color:var(--green)"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a></span>' : '');
 }
 
-function _renderStoreHeroFallback() {
-  document.getElementById('store-hero-bg').style.background = 'linear-gradient(135deg,#FF6B35,#F7931E)';
-  document.getElementById('store-hero-emoji').textContent = '🍕';
-  document.getElementById('store-hero-name').textContent  = 'Pizzaria do Zé (demo)';
-  document.getElementById('store-hero-meta').innerHTML    = '<span>⭐ 4.8</span><span>·</span><span>30–45min</span>';
-  document.getElementById('store-info-strip').innerHTML   = '<span style="color:var(--green);font-weight:700">Taxa: Grátis</span>';
-}
-
-function _renderProducts(products, store) {
-  document.getElementById('products-skeleton').classList.add('hidden');
-  var list  = document.getElementById('products-list');
-  var empty = document.getElementById('products-empty');
-  if (!products.length) { list.classList.add('hidden'); empty.classList.remove('hidden'); return; }
-  list.classList.remove('hidden'); empty.classList.add('hidden');
-  list.innerHTML = products.map(function(p) { return _productCardHTML(p, store); }).join('');
+function _loadProducts(storeId, store) {
+  SB.from('products')
+    .select('*')
+    .eq('store_id', storeId)
+    .eq('ativo', true)
+    .order('avaliacao', { ascending: false })
+    .then(function(r) {
+      document.getElementById('products-skeleton').classList.add('hidden');
+      var list  = document.getElementById('products-list');
+      var empty = document.getElementById('products-empty');
+      if (r.error || !r.data || !r.data.length) {
+        list.classList.add('hidden'); empty.classList.remove('hidden'); return;
+      }
+      list.classList.remove('hidden'); empty.classList.add('hidden');
+      list.innerHTML = r.data.map(function(p) { return _productCardHTML(p, store); }).join('');
+    });
 }
 
 function _productCardHTML(p, store) {
-  var imgContent = p.photoURL
-    ? '<img src="' + p.photoURL + '" style="width:100%;height:100%;object-fit:cover"/>'
+  var imgContent = p.foto_url
+    ? '<img src="' + p.foto_url + '" style="width:100%;height:100%;object-fit:cover"/>'
     : (p.emoji || store.emoji || '🍽️');
 
-  var addBtn = 'addToCart(\''
-    + p.id + '\',\'' + _esc(p.name||'') + '\',' + (+p.price||0) + ',\''
-    + (p.emoji||store.emoji||'') + '\',\'' + (store.id||'') + '\',\''
-    + _esc(store.name||'') + '\',' + (+store.deliveryFee||0) + ')';
+  var addCall = 'addToCart(\''
+    + p.id + '\',\'' + _esc(p.nome||'') + '\',' + (+p.preco||0) + ',\''
+    + _esc(p.emoji||store.emoji||'') + '\',\'' + store.id + '\',\''
+    + _esc(store.nome||'') + '\',' + (+store.taxa_entrega||0) + ')';
 
   return '<div class="product-card">'
     + '<div class="product-img-box">' + imgContent + '</div>'
     + '<div class="product-info">'
-    +   '<div class="product-name">' + _esc(p.name) + '</div>'
-    +   (p.description ? '<div class="product-desc">' + _esc(p.description) + '</div>' : '')
+    +   '<div class="product-name">' + _esc(p.nome) + '</div>'
+    +   (p.descricao ? '<div class="product-desc">' + _esc(p.descricao) + '</div>' : '')
     +   '<div class="product-footer">'
     +     '<div>'
-    +       '<span class="product-price">R$ ' + (+p.price||0).toFixed(2) + '</span>'
-    +       (p.rating ? '<span class="product-rating" style="margin-left:8px">⭐' + (+p.rating).toFixed(1) + '</span>' : '')
+    +       '<span class="product-price">R$ ' + (+p.preco||0).toFixed(2) + '</span>'
+    +       (p.avaliacao ? '<span class="product-rating" style="margin-left:8px">⭐' + (+p.avaliacao).toFixed(1) + '</span>' : '')
     +     '</div>'
-    +     '<button class="btn-add" onclick="' + addBtn + '">'
+    +     '<button class="btn-add" onclick="' + addCall + '">'
     +       '<i class="fa-solid fa-plus" style="font-size:12px"></i>'
     +     '</button>'
     +   '</div>'
@@ -885,18 +842,9 @@ function _productCardHTML(p, store) {
     + '</div>';
 }
 
-function _renderProductsFallback() {
-  var store = { id:'d1', name:'Pizzaria do Zé', emoji:'🍕', deliveryFee:0 };
-  _renderProducts([
-    { id:'p1', name:'Pizza Margherita', description:'Molho, mussarela, manjericão fresco.',   price:32.90, emoji:'🍕', rating:4.8, active:true },
-    { id:'p2', name:'Pizza Calabresa',  description:'Molho, mussarela, calabresa e cebola.', price:35.90, emoji:'🍕', rating:4.6, active:true },
-    { id:'p3', name:'Refri Lata 350ml', description:'Gelado.',                                price:5.00,  emoji:'🥤', rating:null, active:true },
-  ], store);
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  CARRINHO
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function addToCart(productId, name, price, emoji, storeId, storeName, deliveryFee) {
   if (S.cart.storeId && S.cart.storeId !== storeId) {
     if (!confirm('Seu carrinho tem itens de "' + S.cart.storeName + '".\nLimpar e adicionar de "' + storeName + '"?')) return;
@@ -908,28 +856,21 @@ function addToCart(productId, name, price, emoji, storeId, storeName, deliveryFe
 
   var ex = S.cart.items.find(function(i) { return i.id === productId; });
   if (ex) { ex.qty++; }
-  else { S.cart.items.push({ id:productId, name:name, price:+price, emoji:emoji, qty:1 }); }
+  else { S.cart.items.push({ id:productId, nome:name, preco:+price, emoji:emoji, qty:1 }); }
 
   _updateCartBadge();
   showToast('✅ ' + name + ' adicionado!');
 }
 
 function _updateCartBadge() {
-  var total = S.cart.items.reduce(function(a,i) { return a + i.qty; }, 0);
+  var total = S.cart.items.reduce(function(a, i) { return a + i.qty; }, 0);
   var badge = document.getElementById('cart-badge');
   badge.textContent = total;
   badge.classList.toggle('hidden', total === 0);
 }
 
-function openCart() {
-  _renderCartDrawer();
-  document.getElementById('cart-overlay').classList.remove('hidden');
-  document.getElementById('cart-drawer').classList.remove('hidden');
-}
-function closeCart() {
-  document.getElementById('cart-overlay').classList.add('hidden');
-  document.getElementById('cart-drawer').classList.add('hidden');
-}
+function openCart() { _renderCartDrawer(); document.getElementById('cart-overlay').classList.remove('hidden'); document.getElementById('cart-drawer').classList.remove('hidden'); }
+function closeCart() { document.getElementById('cart-overlay').classList.add('hidden'); document.getElementById('cart-drawer').classList.add('hidden'); }
 
 function _renderCartDrawer() {
   var items    = S.cart.items;
@@ -948,23 +889,23 @@ function _renderCartDrawer() {
 
   itemsEl.innerHTML = items.map(function(item, idx) {
     return '<div class="cart-item">'
-      + '<div class="cart-item-emoji">' + (item.emoji||'🍽️') + '</div>'
+      + '<div class="cart-item-emoji">' + (item.emoji || '🍽️') + '</div>'
       + '<div class="cart-item-info">'
-      +   '<div class="cart-item-name">' + _esc(item.name) + '</div>'
-      +   '<div class="cart-item-price">R$ ' + item.price.toFixed(2) + ' cada</div>'
+      +   '<div class="cart-item-name">' + _esc(item.nome) + '</div>'
+      +   '<div class="cart-item-price">R$ ' + item.preco.toFixed(2) + ' cada</div>'
       + '</div>'
       + '<div class="qty-controls">'
       +   '<button class="qty-btn minus" onclick="changeQty(' + idx + ',-1)">−</button>'
       +   '<span class="qty-num">' + item.qty + '</span>'
       +   '<button class="qty-btn plus" onclick="changeQty(' + idx + ',1)">+</button>'
       + '</div>'
-      + '<div class="cart-item-total">R$ ' + (item.price * item.qty).toFixed(2) + '</div>'
+      + '<div class="cart-item-total">R$ ' + (item.preco * item.qty).toFixed(2) + '</div>'
       + '</div>';
   }).join('');
 
-  var sub  = items.reduce(function(a,i) { return a + i.price * i.qty; }, 0);
-  var fee  = S.cart.deliveryFee;
-  var tot  = sub + fee;
+  var sub = items.reduce(function(a,i) { return a + i.preco * i.qty; }, 0);
+  var fee = S.cart.deliveryFee;
+  var tot = sub + fee;
   document.getElementById('cart-subtotal').textContent = 'R$ ' + sub.toFixed(2);
   document.getElementById('cart-delivery').textContent = fee === 0 ? 'Grátis 🎉' : 'R$ ' + fee.toFixed(2);
   document.getElementById('cart-total').textContent    = 'R$ ' + tot.toFixed(2);
@@ -977,9 +918,9 @@ function changeQty(idx, delta) {
   _renderCartDrawer();
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  CHECKOUT
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function proceedCheckout() {
   if (!S.user) {
     closeCart();
@@ -991,12 +932,10 @@ function proceedCheckout() {
   document.getElementById('checkout-address').value = '';
   document.getElementById('address-modal').classList.remove('hidden');
 }
-
 function closeAddressModal(e) {
   if (e && e.target !== document.getElementById('address-modal')) return;
   document.getElementById('address-modal').classList.add('hidden');
 }
-
 function confirmAddressAndPix() {
   var addr = document.getElementById('checkout-address').value.trim();
   if (!addr) { showToast('⚠️ Informe o endereço de entrega', true); return; }
@@ -1004,10 +943,9 @@ function confirmAddressAndPix() {
   document.getElementById('address-modal').classList.add('hidden');
   _openPixModal();
 }
-
 function _openPixModal() {
   var items = S.cart.items;
-  var total = items.reduce(function(a,i) { return a + i.price*i.qty; }, 0) + S.cart.deliveryFee;
+  var total = items.reduce(function(a,i) { return a + i.preco*i.qty; }, 0) + S.cart.deliveryFee;
   document.getElementById('pix-total').textContent = 'R$ ' + total.toFixed(2);
   document.getElementById('pix-code-text').textContent = 'Gerando código...';
   document.getElementById('pix-status').className = 'pix-status waiting';
@@ -1015,92 +953,80 @@ function _openPixModal() {
   document.getElementById('pix-modal').classList.remove('hidden');
   _generatePix(total);
 }
-
 function closePixModal(e) {
   if (e && e.target !== document.getElementById('pix-modal')) return;
   document.getElementById('pix-modal').classList.add('hidden');
   clearInterval(S.pixPolling);
 }
-
 function _generatePix(amount) {
-  // ── PRODUÇÃO: chame sua Cloud Function do Mercado Pago ────
-  // fetch('/api/criar-pix', { method:'POST', headers:{'Content-Type':'application/json'},
+  // ── PRODUÇÃO: chame sua Cloud Function / backend ──────────────
+  // fetch('https://SEU_BACKEND/criar-pix', { method:'POST',
+  //   headers:{'Content-Type':'application/json'},
   //   body: JSON.stringify({ amount, email: S.user.email }) })
   //   .then(r => r.json()).then(data => {
   //     document.getElementById('pix-code-text').textContent = data.qr_code;
-  //     S.pixPolling = setInterval(() => _pollPix(data.id), 3000);
   //   });
-  // ─────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
 
   // Simulação (remova em produção)
   setTimeout(function() {
-    var code = '00020126580014BR.GOV.BCB.PIX0136' + Math.random().toString(36).slice(2,38) + '5204000053039865406' + Math.round(amount*100) + '5802BR5925CIPO DELIVERY6009CIPOBAHIA63048F4A';
+    var code = '00020126580014BR.GOV.BCB.PIX' + Math.random().toString(36).slice(2,38) + '5204000053039865406' + Math.round(amount*100) + '5802BR5925CIPO DELIVERY6009CIPOBAHIA63048F4A';
     document.getElementById('pix-code-text').textContent = code;
-
     var t = 0;
     S.pixPolling = setInterval(function() {
       t++;
-      if (t >= 5) {
-        clearInterval(S.pixPolling);
-        _onPixApproved();
-      }
+      if (t >= 5) { clearInterval(S.pixPolling); _onPixApproved(); }
     }, 1500);
   }, 1000);
 }
-
 function _onPixApproved() {
   var st = document.getElementById('pix-status');
   st.className = 'pix-status approved';
   st.innerHTML = '<span class="pix-dot"></span> ✅ Pagamento aprovado! Criando pedido...';
 
   var items   = S.cart.items;
-  var sub     = items.reduce(function(a,i) { return a + i.price*i.qty; }, 0);
+  var sub     = items.reduce(function(a,i) { return a + i.preco*i.qty; }, 0);
   var total   = sub + S.cart.deliveryFee;
 
-  DB.collection('orders').add({
-    userId:       S.user.uid,
-    userEmail:    S.user.email,
-    userName:     S.user.displayName || '',
-    storeId:      S.cart.storeId,
-    storeName:    S.cart.storeName,
-    items:        items.map(function(i) { return { id:i.id, name:i.name, price:i.price, qty:i.qty, emoji:i.emoji||'' }; }),
-    address:      S.checkoutAddress,
-    subtotal:     sub,
-    deliveryFee:  S.cart.deliveryFee,
-    total:        total,
-    commission:   +(total*0.05).toFixed(2),
-    netValue:     +(total*0.95).toFixed(2),
-    status:       'aguardando',
-    paymentMethod:'pix',
-    paidAt:       firebase.firestore.FieldValue.serverTimestamp(),
-    createdAt:    firebase.firestore.FieldValue.serverTimestamp(),
-  })
-  .then(function() {
+  SB.from('orders').insert({
+    user_id:       S.user.id,
+    user_email:    S.user.email,
+    user_name:     (S.user.user_metadata || {}).full_name || '',
+    store_id:      S.cart.storeId,
+    store_nome:    S.cart.storeName,
+    itens:         JSON.stringify(items),
+    endereco:      S.checkoutAddress,
+    subtotal:      sub,
+    taxa_entrega:  S.cart.deliveryFee,
+    total:         total,
+    comissao:      +(total * 0.05).toFixed(2),
+    valor_liquido: +(total * 0.95).toFixed(2),
+    status:        'aguardando',
+    pagamento:     'pix',
+  }).then(function(r) {
+    if (r.error) { showToast('Erro ao criar pedido: ' + r.error.message, true); return; }
     S.cart = { storeId:null, storeName:'', deliveryFee:0, items:[] };
     _updateCartBadge();
     document.getElementById('pix-modal').classList.add('hidden');
     showToast('🎉 Pedido confirmado! Acompanhe em Pedidos.');
     navigate('orders');
-    try { var a=document.getElementById('cash-sound'); a.currentTime=0; a.play(); } catch(e){}
-  })
-  .catch(function(e) { showToast('Erro ao criar pedido: ' + e.message, true); });
+    try { var a = document.getElementById('cash-sound'); a.currentTime=0; a.play(); } catch(e) {}
+  });
 }
-
 function copyPix() {
   var code = document.getElementById('pix-code-text').textContent;
   if (navigator.clipboard) navigator.clipboard.writeText(code).then(function() { showToast('✅ Código copiado!'); });
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  PEDIDOS (cliente)
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function filterOrders(btn, status) {
   document.querySelectorAll('.order-tab').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   S.orderFilter = status;
   _loadOrders();
 }
-
 function _loadOrders() {
   var loginEl = document.getElementById('orders-login-prompt');
   var skelEl  = document.getElementById('orders-skeleton');
@@ -1116,50 +1042,43 @@ function _loadOrders() {
   }
   loginEl.classList.add('hidden');
   skelEl.classList.remove('hidden');
-  listEl.classList.add('hidden');
-  emptyEl.classList.add('hidden');
 
-  if (UNSUB.orders) UNSUB.orders();
-
-  UNSUB.orders = DB.collection('orders')
-    .where('userId','==', S.user.uid)
-    .where('status','==', S.orderFilter)
-    .orderBy('createdAt','desc')
-    .onSnapshot(function(snap) {
-      var orders = [];
-      snap.forEach(function(d) { orders.push(Object.assign({ id:d.id }, d.data())); });
+  SB.from('orders')
+    .select('*')
+    .eq('user_id', S.user.id)
+    .eq('status', S.orderFilter)
+    .order('created_at', { ascending: false })
+    .then(function(r) {
       skelEl.classList.add('hidden');
-
-      if (!orders.length) {
+      if (r.error || !r.data || !r.data.length) {
         listEl.classList.add('hidden');
         emptyEl.classList.remove('hidden');
         return;
       }
       emptyEl.classList.add('hidden');
       listEl.classList.remove('hidden');
-      listEl.innerHTML = orders.map(_orderCardHTML).join('');
-    }, function() {
-      skelEl.classList.add('hidden');
-      emptyEl.classList.remove('hidden');
+      listEl.innerHTML = r.data.map(_orderCardHTML).join('');
     });
 }
 
 function _orderCardHTML(o) {
   var badges = {
-    aguardando:'<span class="order-status-badge badge-aguardando">⏳ Aguardando</span>',
-    preparando:'<span class="order-status-badge badge-preparando">👨‍🍳 Preparando</span>',
-    saiu:      '<span class="order-status-badge badge-saiu">🛵 A caminho</span>',
-    entregue:  '<span class="order-status-badge badge-entregue">✅ Entregue</span>',
+    aguardando: '<span class="order-status-badge badge-aguardando">⏳ Aguardando</span>',
+    preparando: '<span class="order-status-badge badge-preparando">👨‍🍳 Preparando</span>',
+    saiu:       '<span class="order-status-badge badge-saiu">🛵 A caminho</span>',
+    entregue:   '<span class="order-status-badge badge-entregue">✅ Entregue</span>',
   };
-  var date = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleDateString('pt-BR') : 'Agora';
-  var items = (o.items||[]).map(function(i) { return i.qty+'x '+i.name; }).join(', ');
+  var date  = o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : 'Agora';
+  var itens = [];
+  try { itens = JSON.parse(o.itens || '[]'); } catch(e) {}
+  var itemsText = itens.map(function(i) { return i.qty + 'x ' + i.nome; }).join(', ');
 
   return '<div class="order-card" onclick="openOrderStatus(\'' + o.id + '\')">'
     + '<div class="order-card-top">'
-    +   '<span class="order-store-name">' + _esc(o.storeName||'') + '</span>'
+    +   '<span class="order-store-name">' + _esc(o.store_nome || '') + '</span>'
     +   (badges[o.status] || badges.aguardando)
     + '</div>'
-    + '<div class="order-items-text">' + _esc(items) + '</div>'
+    + '<div class="order-items-text">' + _esc(itemsText) + '</div>'
     + '<div class="order-card-bottom">'
     +   '<span class="order-date">' + date + '</span>'
     +   '<span class="order-total">R$ ' + (+o.total||0).toFixed(2) + '</span>'
@@ -1173,19 +1092,29 @@ function openOrderStatus(orderId) {
   modal.classList.remove('hidden');
   content.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px">Carregando...</p>';
 
-  if (modal._unsub) modal._unsub();
-  modal._unsub = DB.collection('orders').doc(orderId).onSnapshot(function(snap) {
-    if (!snap.exists) return;
-    content.innerHTML = _orderStatusHTML(Object.assign({ id:snap.id }, snap.data()));
-  });
+  SB.from('orders').select('*').eq('id', orderId).single()
+    .then(function(r) {
+      if (r.error || !r.data) return;
+      content.innerHTML = _orderStatusHTML(r.data);
+
+      // Realtime update do status
+      if (modal._channel) SB.removeChannel(modal._channel);
+      modal._channel = SB.channel('order-' + orderId)
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'orders',
+          filter: 'id=eq.' + orderId
+        }, function(payload) {
+          content.innerHTML = _orderStatusHTML(payload.new);
+        }).subscribe();
+    });
 }
 
 function _orderStatusHTML(o) {
   var steps = [
-    { key:'aguardando', label:'Aguardando',      icon:'⏳', desc:'Aguardando confirmação da loja' },
-    { key:'preparando', label:'Preparando',       icon:'👨‍🍳', desc:'Sua comida está sendo preparada' },
-    { key:'saiu',       label:'A caminho',        icon:'🛵', desc:'Saiu para entrega' },
-    { key:'entregue',   label:'Entregue',         icon:'✅', desc:'Pedido entregue!' },
+    { key:'aguardando', label:'Aguardando',  icon:'⏳', desc:'Aguardando confirmação da loja' },
+    { key:'preparando', label:'Preparando',  icon:'👨‍🍳', desc:'Sua comida está sendo preparada' },
+    { key:'saiu',       label:'A caminho',   icon:'🛵', desc:'Saiu para entrega' },
+    { key:'entregue',   label:'Entregue',    icon:'✅', desc:'Pedido entregue!' },
   ];
   var curIdx = steps.findIndex(function(s) { return s.key === o.status; });
 
@@ -1195,69 +1124,80 @@ function _orderStatusHTML(o) {
     return '<div class="status-step">'
       + '<div class="status-circle ' + cc + '">' + step.icon + '</div>'
       + '<div class="status-label">'
-      +   '<p style="' + (!cc.match(/done|active/) ? 'color:var(--text-muted)' : '') + '">' + step.label + '</p>'
+      +   '<p style="' + (cc==='idle'?'color:var(--text-muted)':'') + '">' + step.label + '</p>'
       +   '<span>' + step.desc + '</span>'
       + '</div>'
       + '</div>'
       + (i < steps.length-1 ? '<div class="status-line ' + lc + '"></div>' : '');
   }).join('');
 
-  var items = (o.items||[]).map(function(i) {
-    return '<div class="status-summary-row"><span>' + i.qty + 'x ' + _esc(i.name) + '</span><span>R$ ' + (i.price*i.qty).toFixed(2) + '</span></div>';
+  var itens = [];
+  try { itens = JSON.parse(o.itens || '[]'); } catch(e) {}
+  var itemsHTML = itens.map(function(i) {
+    return '<div class="status-summary-row"><span>' + i.qty + 'x ' + _esc(i.nome) + '</span><span>R$ ' + (i.preco*i.qty).toFixed(2) + '</span></div>';
   }).join('');
 
   return '<div class="status-track">' + stepsHTML + '</div>'
-    + '<div class="status-summary">'
-    + items
+    + '<div class="status-summary">' + itemsHTML
     + '<div class="status-summary-row status-summary-total"><span>Total</span><span>R$ ' + (+o.total||0).toFixed(2) + '</span></div>'
-    + (o.address ? '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">📍 ' + _esc(o.address) + '</div>' : '')
+    + (o.endereco ? '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">📍 ' + _esc(o.endereco) + '</div>' : '')
     + '</div>';
 }
 
 function closeOrderStatus(e) {
   if (e && e.target !== document.getElementById('order-status-modal')) return;
   var modal = document.getElementById('order-status-modal');
-  if (modal._unsub) modal._unsub();
+  if (modal._channel) SB.removeChannel(modal._channel);
   modal.classList.add('hidden');
 }
 
-// ══════════════════════════════════════════════════════
-//  PERFIL — MODO LOJISTA
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  REALTIME — Alerta lojista (novo pedido)
+// ════════════════════════════════════════════════════
+function _subscribeLojistaOrders() {
+  if (!S.user || S.orderChannel) return;
+  // Busca storeId do lojista
+  SB.from('stores').select('id').eq('owner_id', S.user.id).eq('ativo', true).single()
+    .then(function(r) {
+      if (r.error || !r.data) return;
+      var storeId = r.data.id;
+      S.lojistaStoreId = storeId;
+
+      S.orderChannel = SB.channel('store-orders-' + storeId)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'orders',
+          filter: 'store_id=eq.' + storeId
+        }, function() {
+          // Toca som e mostra notificação
+          try { var a = document.getElementById('cash-sound'); a.currentTime=0; a.play(); } catch(e) {}
+          showToast('🔔 Novo pedido chegou!', false, 5000);
+          document.getElementById('orders-badge').classList.remove('hidden');
+        }).subscribe();
+    });
+}
+
+// ════════════════════════════════════════════════════
+//  PERFIL — LOJISTA
+// ════════════════════════════════════════════════════
 function _checkLojistaLink() {
   if (!S.user) return;
-  DB.collection('stores')
-    .where('ownerId','==', S.user.uid)
-    .where('active','==', true)
-    .get()
-    .then(function(snap) {
-      S.lojistaStoreId = snap.empty ? null : snap.docs[0].id;
-    })
-    .catch(function() { S.lojistaStoreId = null; });
+  SB.from('stores').select('id').eq('owner_id', S.user.id).maybeSingle()
+    .then(function(r) {
+      S.lojistaStoreId = r.data ? r.data.id : null;
+    });
 }
-
 function handleLojistaMode() {
-  if (!S.user) {
-    S.pendingAfterLogin = handleLojistaMode;
-    openLoginModal();
-    return;
-  }
-  DB.collection('stores')
-    .where('ownerId','==', S.user.uid)
-    .get()
-    .then(function(snap) {
-      if (!snap.empty) {
-        window.location.href = 'loja.html';
-      } else {
-        navigate('partner');
-      }
-    })
-    .catch(function() { navigate('partner'); });
+  if (!S.user) { S.pendingAfterLogin = handleLojistaMode; openLoginModal(); return; }
+  SB.from('stores').select('id').eq('owner_id', S.user.id).maybeSingle()
+    .then(function(r) {
+      if (r.data) window.location.href = 'loja.html';
+      else navigate('partner');
+    });
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  CADASTRO PARCEIRO
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function handleLogoSelect(input) {
   if (input.files[0]) {
     _logoFile = input.files[0];
@@ -1268,57 +1208,57 @@ function handleLogoSelect(input) {
 function submitPartnerForm() {
   if (!S.user) { S.pendingAfterLogin = submitPartnerForm; openLoginModal(); return; }
 
-  var name     = document.getElementById('p-name').value.trim();
+  var nome     = document.getElementById('p-name').value.trim();
   var owner    = document.getElementById('p-owner').value.trim();
-  var docNum   = document.getElementById('p-doc').value.trim();
+  var doc      = document.getElementById('p-doc').value.trim();
   var whatsapp = document.getElementById('p-whatsapp').value.trim();
   var address  = document.getElementById('p-address').value.trim();
-  var moment   = document.getElementById('p-moment').value;
+  var momento  = document.getElementById('p-moment').value;
   var fee      = parseFloat(document.getElementById('p-fee').value) || 0;
   var prep     = parseInt(document.getElementById('p-prep').value) || 30;
   var emoji    = document.getElementById('p-emoji').value.trim() || '🍽️';
   var desc     = document.getElementById('p-desc').value.trim();
-  var hours    = document.getElementById('p-hours').value.trim();
+  var horario  = document.getElementById('p-hours').value.trim();
 
-  if (!name || !owner || !docNum || !whatsapp || !address) {
+  if (!nome || !owner || !doc || !whatsapp || !address) {
     showToast('⚠️ Preencha todos os campos obrigatórios', true); return;
   }
 
-  var data = {
-    name:name, owner:owner, document:docNum, whatsapp:whatsapp,
-    address:address, moment:moment, deliveryFee:fee, prepTime:prep,
-    emoji:emoji, description:desc, hours:hours,
-    ownerId: S.user.uid,
-    active:  false, isOpen: false,
-    rating:  5.0,
-    deliveryTime: prep + '–' + (prep+15),
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  var dados = {
+    nome:nome, responsavel:owner, documento:doc, whatsapp:whatsapp,
+    endereco:address, momento:momento, taxa_entrega:fee, tempo_preparo:prep,
+    emoji:emoji, descricao:desc, horario:horario,
+    owner_id: S.user.id,
+    ativo: false, aberta: false,
+    avaliacao: 5.0,
+    tempo_entrega: prep + '–' + (prep + 15),
   };
 
-  var save = function(logoURL) {
-    if (logoURL) data.logoURL = logoURL;
-    DB.collection('stores').add(data)
-      .then(function() {
-        showToast('✅ Solicitação enviada! Aguarde aprovação em até 24h.');
-        navigate('profile');
-      })
-      .catch(function(e) { showToast('Erro: ' + e.message, true); });
+  var doInsert = function(logoURL) {
+    if (logoURL) dados.logo_url = logoURL;
+    SB.from('stores').insert(dados).then(function(r) {
+      if (r.error) { showToast('Erro: ' + r.error.message, true); return; }
+      showToast('✅ Solicitação enviada! Aguarde aprovação em até 24h.');
+      navigate('profile');
+    });
   };
 
   if (_logoFile) {
-    var storRef = STORAGE.ref('logos/' + S.user.uid + '_' + Date.now());
-    storRef.put(_logoFile)
-      .then(function(up) { return up.ref.getDownloadURL(); })
-      .then(function(url) { save(url); })
-      .catch(function(e) { showToast('Erro ao enviar logo: ' + e.message, true); });
+    var path = 'logos/' + S.user.id + '_' + Date.now();
+    SB.storage.from('logos').upload(path, _logoFile)
+      .then(function(r) {
+        if (r.error) { showToast('Erro ao enviar logo: ' + r.error.message, true); return; }
+        var url = SB.storage.from('logos').getPublicUrl(path).data.publicUrl;
+        doInsert(url);
+      });
   } else {
-    save('');
+    doInsert('');
   }
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  MAPA
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function openMapModal() {
   document.getElementById('map-modal').classList.remove('hidden');
   if (!S.mapInit) { setTimeout(_initMap, 150); S.mapInit = true; }
@@ -1343,12 +1283,12 @@ function _initMap() {
   L.marker([-10.8023,-38.5158],{icon:mkPrem}).addTo(map).bindPopup('<b>🌟 Pizzaria do Zé</b><br>Premium · ⭐4.8');
   L.marker([-10.8050,-38.5180],{icon:mkStd}).addTo(map).bindPopup('<b>🍔 Burguer Cipó</b><br>⭐4.6');
   L.marker([-10.8000,-38.5140],{icon:mkStd}).addTo(map).bindPopup('<b>🫐 Açaí da Serra</b><br>⭐4.9');
-  L.circle(cipo, { radius:1500, color:'#EA1D2C', fillColor:'#EA1D2C', fillOpacity:.05, weight:1.5, dashArray:'6,6' }).addTo(map);
+  L.circle(cipo,{radius:1500,color:'#EA1D2C',fillColor:'#EA1D2C',fillOpacity:.05,weight:1.5,dashArray:'6,6'}).addTo(map);
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  TOAST
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 var _toastTimer;
 function showToast(msg, isErr, dur) {
   dur = dur || 2800;
@@ -1359,9 +1299,9 @@ function showToast(msg, isErr, dur) {
   _toastTimer = setTimeout(function() { el.className = 'toast hidden'; }, dur);
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 //  UTILITÁRIOS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 function _esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
